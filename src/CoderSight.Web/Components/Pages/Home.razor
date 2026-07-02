@@ -1,0 +1,32 @@
+@page "/"
+@inject NavigationManager Nav
+@inject ISiteSettingsService SettingsService
+@inject IPageService PageService
+
+@if (homePage is not null)
+{
+    <PageTitle>@(homePage.MetaTitle ?? homePage.Title ?? _siteName)</PageTitle>
+    <BlockRenderer Blocks="homePage.Blocks" />
+}
+
+@code {
+    private Page? homePage;
+    private string _siteName = "CoderSight";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var settings = await SettingsService.GetAsync();
+        _siteName = settings?.SiteName ?? "CoderSight";
+
+        if (settings?.EnableMultilingual ?? true)
+        {
+            var culture = settings?.DefaultCulture ?? "en";
+            Nav.NavigateTo($"/{culture}/", forceLoad: true);
+        }
+        else
+        {
+            var culture = settings?.DefaultCulture ?? "en";
+            homePage = await PageService.GetBySlugAsync("", culture);
+        }
+    }
+}

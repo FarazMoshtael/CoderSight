@@ -1,0 +1,312 @@
+@page "/admin/users"
+@layout AdminLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@inject UserManager<ApplicationUser> UserManager
+@inject RoleManager<IdentityRole> RoleManager
+@using Microsoft.AspNetCore.Identity
+@using CoderSight.Data
+@rendermode InteractiveServer
+
+<PageTitle>Users — @SiteName Admin</PageTitle>
+
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Users</h1>
+        <p class="text-sm text-gray-500 mt-1">@totalCount user@(totalCount != 1 ? "s" : "") total</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <select @bind="roleFilter" @bind:after="LoadData" class="border border-gray-300 rounded-md px-3 py-2 text-sm">
+            <option value="">All Roles</option>
+            <option value="Admin">Admins</option>
+            <option value="Editor">Editors</option>
+            <option value="User">Users (no role)</option>
+        </select>
+        <input type="text" @bind="searchQuery" @bind:after="LoadData" placeholder="Search email or name..." class="border border-gray-300 rounded-md px-3 py-2 text-sm w-64" />
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="mb-4 px-4 py-3 rounded-md text-sm @(isError ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700")">@message</div>
+}
+
+<div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <table class="w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-200">
+            <tr>
+                <th class="text-left px-4 py-3 font-medium text-gray-600">User</th>
+                <th class="text-left px-4 py-3 font-medium text-gray-600">Email</th>
+                <th class="text-left px-4 py-3 font-medium text-gray-600">Role</th>
+                <th class="text-left px-4 py-3 font-medium text-gray-600">Status</th>
+                <th class="text-left px-4 py-3 font-medium text-gray-600">Joined</th>
+                <th class="text-right px-4 py-3 font-medium text-gray-600">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+            @if (users.Any())
+            {
+                @foreach (var u in users)
+                {
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center text-xs font-bold text-gray-600">
+                                    @(string.IsNullOrEmpty(u.DisplayName) ? "?" : u.DisplayName[..1].ToUpper())
+                                </div>
+                                <span class="font-medium text-gray-900">@(string.IsNullOrEmpty(u.DisplayName) ? "—" : u.DisplayName)</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 font-mono text-xs text-gray-600">@u.Email</td>
+                        <td class="px-4 py-3">
+                            @if (u.Roles.Contains("Admin"))
+                            {
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Admin</span>
+                            }
+                            else if (u.Roles.Contains("Editor"))
+                            {
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Editor</span>
+                            }
+                            else
+                            {
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">User</span>
+                            }
+                        </td>
+                        <td class="px-4 py-3">
+                            @if (u.IsLockedOut)
+                            {
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">Locked</span>
+                            }
+                            else if (u.EmailConfirmed)
+                            {
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Active</span>
+                            }
+                            else
+                            {
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Unconfirmed</span>
+                            }
+                        </td>
+                        <td class="px-4 py-3 text-gray-500 text-xs">@(u.JoinedAt?.ToString("MMM dd, yyyy") ?? "—")</td>
+                        <td class="px-4 py-3 text-right">
+                            @if (!u.IsSelf)
+                            {
+                                <div class="flex items-center justify-end gap-2">
+                                    @if (editingUserId == u.Id)
+                                    {
+                                        <select @bind="selectedRole" class="border border-gray-300 rounded px-2 py-1 text-xs">
+                                            <option value="">User (no role)</option>
+                                            <option value="Editor">Editor</option>
+                                            <option value="Admin">Admin</option>
+                                        </select>
+                                        <button @onclick="() => SaveRole(u.Id)" class="text-green-600 hover:text-green-800 text-xs font-medium">Save</button>
+                                        <button @onclick="() => editingUserId = null" class="text-gray-400 hover:text-gray-600 text-xs">Cancel</button>
+                                    }
+                                    else
+                                    {
+                                        <button @onclick="() => StartEditRole(u)" class="text-indigo-500 hover:text-indigo-700 text-xs">Role</button>
+                                        @if (u.IsLockedOut)
+                                        {
+                                            <button @onclick="() => Unlock(u.Id)" class="text-green-500 hover:text-green-700 text-xs">Unlock</button>
+                                        }
+                                        else
+                                        {
+                                            <button @onclick="() => Lock(u.Id)" class="text-amber-500 hover:text-amber-700 text-xs">Lock</button>
+                                        }
+                                        <button @onclick="() => Delete(u.Id, u.Email)" class="text-red-500 hover:text-red-700 text-xs">Delete</button>
+                                    }
+                                </div>
+                            }
+                            else
+                            {
+                                <span class="text-xs text-gray-400 italic">You</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            }
+            else
+            {
+                <tr>
+                    <td colspan="6" class="px-4 py-8 text-center text-gray-400">No users found.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (totalCount > 0)
+{
+    <div class="mt-4 flex justify-between items-center text-sm text-gray-500">
+        <span>
+            Showing @users.Count of @totalCount user@(totalCount != 1 ? "s" : "")
+            @if (!string.IsNullOrEmpty(roleFilter))
+            {
+                <span> in role "@roleFilter"</span>
+            }
+        </span>
+        <div class="flex gap-2">
+            @if (adminCount > 0 || editorCount > 0)
+            {
+                <span class="px-2 py-1 rounded bg-purple-50 text-purple-700 text-xs">@adminCount Admin@(adminCount != 1 ? "s" : "")</span>
+                <span class="px-2 py-1 rounded bg-blue-50 text-blue-700 text-xs">@editorCount Editor@(editorCount != 1 ? "s" : "")</span>
+                <span class="px-2 py-1 rounded bg-gray-50 text-gray-600 text-xs">@userCount User@(userCount != 1 ? "s" : "")</span>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    [CascadingParameter]
+    private Task<Microsoft.AspNetCore.Components.Authorization.AuthenticationState>? AuthState { get; set; }
+
+    private List<UserRow> users = [];
+    private int totalCount, adminCount, editorCount, userCount;
+    private string roleFilter = "";
+    private string searchQuery = "";
+    private string? message;
+    private bool isError;
+    private string? editingUserId;
+    private string selectedRole = "";
+    private string? currentUserId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthState is not null)
+        {
+            var auth = await AuthState;
+            var currentUser = await UserManager.GetUserAsync(auth.User);
+            currentUserId = currentUser?.Id;
+        }
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        var allUsers = UserManager.Users.OrderByDescending(u => u.Id).ToList();
+        var rows = new List<UserRow>();
+
+        foreach (var u in allUsers)
+        {
+            var roles = await UserManager.GetRolesAsync(u);
+            rows.Add(new UserRow
+            {
+                Id = u.Id,
+                DisplayName = u.DisplayName,
+                Email = u.Email ?? "",
+                Roles = roles.ToList(),
+                EmailConfirmed = u.EmailConfirmed,
+                IsLockedOut = u.LockoutEnd.HasValue && u.LockoutEnd > DateTimeOffset.UtcNow,
+                JoinedAt = u.LockoutEnd?.DateTime, // Identity doesn't track join date; we'll use a workaround
+                IsSelf = u.Id == currentUserId
+            });
+        }
+
+        // Identity doesn't store a created date — approximate from user ordering
+        // For a proper solution, a CreatedAt field would be needed on ApplicationUser
+        foreach (var r in rows)
+            r.JoinedAt = null;
+
+        adminCount = rows.Count(r => r.Roles.Contains("Admin"));
+        editorCount = rows.Count(r => r.Roles.Contains("Editor"));
+        userCount = rows.Count(r => !r.Roles.Contains("Admin") && !r.Roles.Contains("Editor"));
+        totalCount = rows.Count;
+
+        if (!string.IsNullOrEmpty(roleFilter))
+        {
+            rows = roleFilter == "User"
+                ? rows.Where(r => !r.Roles.Contains("Admin") && !r.Roles.Contains("Editor")).ToList()
+                : rows.Where(r => r.Roles.Contains(roleFilter)).ToList();
+        }
+
+        if (!string.IsNullOrEmpty(searchQuery))
+        {
+            var q = searchQuery.Trim().ToLower();
+            rows = rows.Where(r =>
+                r.Email.Contains(q, StringComparison.OrdinalIgnoreCase) ||
+                (r.DisplayName?.Contains(q, StringComparison.OrdinalIgnoreCase) ?? false)
+            ).ToList();
+        }
+
+        users = rows;
+    }
+
+    private void StartEditRole(UserRow u)
+    {
+        editingUserId = u.Id;
+        selectedRole = u.Roles.Contains("Admin") ? "Admin" : u.Roles.Contains("Editor") ? "Editor" : "";
+    }
+
+    private async Task SaveRole(string userId)
+    {
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user is null) return;
+
+        var currentRoles = await UserManager.GetRolesAsync(user);
+        if (currentRoles.Any())
+            await UserManager.RemoveFromRolesAsync(user, currentRoles);
+
+        if (!string.IsNullOrEmpty(selectedRole))
+            await UserManager.AddToRoleAsync(user, selectedRole);
+
+        editingUserId = null;
+        message = $"Role updated for {user.Email}.";
+        isError = false;
+        await LoadData();
+    }
+
+    private async Task Lock(string userId)
+    {
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user is null) return;
+
+        await UserManager.SetLockoutEnabledAsync(user, true);
+        await UserManager.SetLockoutEndDateAsync(user, DateTimeOffset.UtcNow.AddYears(100));
+        message = $"{user.Email} has been locked.";
+        isError = false;
+        await LoadData();
+    }
+
+    private async Task Unlock(string userId)
+    {
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user is null) return;
+
+        await UserManager.SetLockoutEndDateAsync(user, null);
+        message = $"{user.Email} has been unlocked.";
+        isError = false;
+        await LoadData();
+    }
+
+    private async Task Delete(string userId, string email)
+    {
+        var user = await UserManager.FindByIdAsync(userId);
+        if (user is null) return;
+
+        var result = await UserManager.DeleteAsync(user);
+        if (result.Succeeded)
+        {
+            message = $"{email} has been deleted.";
+            isError = false;
+        }
+        else
+        {
+            message = $"Failed to delete {email}: {string.Join(", ", result.Errors.Select(e => e.Description))}";
+            isError = true;
+        }
+        await LoadData();
+    }
+
+    private class UserRow
+    {
+        public string Id { get; set; } = "";
+        public string? DisplayName { get; set; }
+        public string Email { get; set; } = "";
+        public List<string> Roles { get; set; } = [];
+        public bool EmailConfirmed { get; set; }
+        public bool IsLockedOut { get; set; }
+        public DateTime? JoinedAt { get; set; }
+        public bool IsSelf { get; set; }
+    }
+}

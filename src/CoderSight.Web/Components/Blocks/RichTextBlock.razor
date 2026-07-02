@@ -1,0 +1,11 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-12 px-4">
+    <div class="max-w-3xl mx-auto prose">
+        @((MarkupString)(Data?.Content ?? ""))
+    </div>
+</section>
+
+@code {
+    [Parameter] public RichTextBlockData? Data { get; set; }
+}

@@ -1,0 +1,28 @@
+@using CoderSight.Core.Blocks.Data
+@inject NavigationManager Nav
+
+<section class="py-6 px-4">
+    <div class="max-w-3xl mx-auto flex items-center gap-4">
+        <span class="text-sm text-gray-500 font-medium">Share:</span>
+        @if (Data?.ShowTwitter == true)
+        {
+            <a href="https://twitter.com/intent/tweet?url=@Uri.EscapeDataString(Nav.Uri)" target="_blank" class="text-gray-400 hover:text-blue-400 text-sm">Twitter</a>
+        }
+        @if (Data?.ShowLinkedIn == true)
+        {
+            <a href="https://www.linkedin.com/sharing/share-offsite/?url=@Uri.EscapeDataString(Nav.Uri)" target="_blank" class="text-gray-400 hover:text-blue-600 text-sm">LinkedIn</a>
+        }
+        @if (Data?.ShowFacebook == true)
+        {
+            <a href="https://www.facebook.com/sharer/sharer.php?u=@Uri.EscapeDataString(Nav.Uri)" target="_blank" class="text-gray-400 hover:text-blue-500 text-sm">Facebook</a>
+        }
+        @if (Data?.ShowCopyLink == true)
+        {
+            <button onclick="csCopyLink(this)" class="text-gray-400 hover:text-gray-600 text-sm cursor-pointer">Copy Link</button>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public ShareButtonsBlockData? Data { get; set; }
+}

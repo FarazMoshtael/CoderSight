@@ -1,0 +1,29 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-16 px-4 bg-white">
+    <div class="max-w-6xl mx-auto">
+        @if (!string.IsNullOrEmpty(Data?.SectionTitle))
+        {
+            <h2 class="text-3xl font-bold text-center text-brand-navy mb-12">@Data.SectionTitle</h2>
+        }
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-@(Data?.Columns ?? 3) gap-8">
+            @if (Data?.Features is not null)
+            {
+                @foreach (var feature in Data.Features)
+                {
+                    <div class="text-center p-6">
+                        <div class="w-12 h-12 bg-blue-50 text-brand-blue rounded-lg flex items-center justify-center mx-auto mb-4 text-xl font-bold">
+                            @feature.Icon[..1].ToUpper()
+                        </div>
+                        <h3 class="text-lg font-semibold text-brand-navy mb-2">@feature.Title</h3>
+                        <p class="text-brand-slate">@feature.Description</p>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public FeaturesListBlockData? Data { get; set; }
+}

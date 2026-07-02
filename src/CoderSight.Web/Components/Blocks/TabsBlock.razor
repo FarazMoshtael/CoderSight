@@ -1,0 +1,47 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-12 px-4">
+    <div class="max-w-4xl mx-auto">
+        @if (Data?.Tabs is not null && Data.Tabs.Count > 0)
+        {
+            var groupId = $"cs-tabs-{Id}";
+            <div class="cs-tabs-wrapper" id="@groupId">
+                <div class="border-b border-gray-200 flex gap-8">
+                    @for (var i = 0; i < Data.Tabs.Count; i++)
+                    {
+                        var index = i;
+                        <button class="cs-tab-btn py-3 px-1 text-sm font-medium border-b-2 transition-colors @(i == 0 ? "border-brand-blue text-brand-blue" : "border-transparent text-brand-slate hover:text-brand-navy")"
+                                onclick="csTabSwitch(this, @index)"
+                                data-tab-index="@i">
+                            @Data.Tabs[i].Title
+                        </button>
+                    }
+                </div>
+                @for (var i = 0; i < Data.Tabs.Count; i++)
+                {
+                    <div class="cs-tab-content py-6 prose" style="@(i == 0 ? "" : "display:none")" data-tab-index="@i">
+                        @((MarkupString)(Data.Tabs[i].Content ?? ""))
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+<script suppress-error="BL9992">
+    function csTabSwitch(btn, index) {
+        var wrapper = btn.closest('.cs-tabs-wrapper');
+        wrapper.querySelectorAll('.cs-tab-btn').forEach(function(b) {
+            b.className = b.className.replace('border-brand-blue text-brand-blue', 'border-transparent text-brand-slate hover:text-brand-navy');
+        });
+        btn.className = btn.className.replace('border-transparent text-brand-slate hover:text-brand-navy', 'border-brand-blue text-brand-blue');
+        wrapper.querySelectorAll('.cs-tab-content').forEach(function(c) {
+            c.style.display = c.getAttribute('data-tab-index') == index ? '' : 'none';
+        });
+    }
+</script>
+
+@code {
+    [Parameter] public TabsBlockData? Data { get; set; }
+    private string Id = Guid.NewGuid().ToString("N")[..8];
+}

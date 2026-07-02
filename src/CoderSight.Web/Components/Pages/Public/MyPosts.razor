@@ -1,0 +1,102 @@
+@page "/my-posts"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject IBlogService BlogService
+@inject ISiteSettingsService SettingsService
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthStateProvider
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using CoderSight.Data
+@rendermode InteractiveServer
+
+<PageTitle>My Submissions — @SiteName</PageTitle>
+
+<div class="max-w-3xl mx-auto py-10 px-4">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-brand-navy">My Submissions</h1>
+            <p class="text-sm text-brand-slate mt-1">Track the status of your submitted blog posts.</p>
+        </div>
+        <a href="/submit-post" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-medium hover:opacity-90">
+            + Submit New Post
+        </a>
+    </div>
+
+    @if (posts.Any())
+    {
+        <div class="space-y-4">
+            @foreach (var post in posts)
+            {
+                <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-semibold text-brand-navy truncate">@post.Page.Title</h3>
+                            <p class="text-sm text-brand-slate mt-1 line-clamp-2">@post.Excerpt</p>
+                            <div class="flex items-center gap-3 mt-3 text-xs text-gray-400">
+                                <span>@post.Page.Culture.ToUpper()</span>
+                                <span>@post.Page.CreatedAt.ToString("MMM dd, yyyy")</span>
+                            </div>
+                        </div>
+                        <div class="ml-4 shrink-0">
+                            @switch (post.Page.Status)
+                            {
+                                case CoderSight.Core.Enums.PageStatus.PendingReview:
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800">Pending Review</span>
+                                    break;
+                                case CoderSight.Core.Enums.PageStatus.Published:
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">Published</span>
+                                    break;
+                                case CoderSight.Core.Enums.PageStatus.Rejected:
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Rejected</span>
+                                    break;
+                                case CoderSight.Core.Enums.PageStatus.Draft:
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Draft</span>
+                                    break;
+                                default:
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">@post.Page.Status</span>
+                                    break;
+                            }
+                        </div>
+                    </div>
+                    @if (!string.IsNullOrEmpty(post.AdminNotes) && post.Page.Status == CoderSight.Core.Enums.PageStatus.Rejected)
+                    {
+                        <div class="mt-3 px-3 py-2 rounded bg-red-50 text-sm text-red-700">
+                            <strong>Admin feedback:</strong> @post.AdminNotes
+                        </div>
+                    }
+                    @if (post.Page.Status == CoderSight.Core.Enums.PageStatus.Published)
+                    {
+                        <div class="mt-3">
+                            <a href="@(isMultilingual ? $"/{post.Page.Culture}/{post.Page.Slug}" : $"/{post.Page.Slug}")" class="text-sm text-brand-blue hover:underline font-medium">View published post →</a>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
+            <p class="text-gray-400 mb-4">You haven't submitted any blog posts yet.</p>
+            <a href="/submit-post" class="inline-block px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-medium hover:opacity-90">Submit Your First Post</a>
+        </div>
+    }
+</div>
+
+@code {
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    private List<CoderSight.Core.Entities.BlogPost> posts = [];
+    private bool isMultilingual = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var settings = await SettingsService.GetAsync();
+        isMultilingual = settings?.EnableMultilingual ?? true;
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = await UserManager.GetUserAsync(authState.User);
+        if (user is not null)
+            posts = await BlogService.GetUserSubmissionsAsync(user.Id);
+    }
+}

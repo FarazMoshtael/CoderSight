@@ -1,0 +1,311 @@
+@page "/admin/menu"
+@layout AdminLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Editor")]
+@inject INavMenuService NavMenuService
+@inject IPageService PageService
+@rendermode InteractiveServer
+
+<PageTitle>Navigation Menu — @SiteName Admin</PageTitle>
+
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Navigation Menu</h1>
+        <p class="text-sm text-gray-500 mt-1">Manage navbar links and dropdown menus</p>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="mb-4 px-4 py-3 rounded-md text-sm @(isError ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700")">
+        @message
+    </div>
+}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Menu items list -->
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Menu Items</h2>
+
+            @if (menuItems.Any())
+            {
+                <div class="space-y-2">
+                    @foreach (var item in menuItems.Where(m => m.ParentId == null).OrderBy(m => m.SortOrder))
+                    {
+                        <div class="border border-gray-200 rounded-lg">
+                            <!-- Parent item -->
+                            <div class="flex items-center justify-between px-4 py-3">
+                                <div class="flex items-center gap-3 flex-1 min-w-0">
+                                    <div class="flex flex-col gap-0.5">
+                                        <button @onclick="() => MoveUp(item)" class="text-gray-400 hover:text-gray-600 text-xs leading-none" disabled="@(item.SortOrder == 0)">▲</button>
+                                        <button @onclick="() => MoveDown(item)" class="text-gray-400 hover:text-gray-600 text-xs leading-none">▼</button>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <span class="font-medium text-sm text-gray-900">@item.Label</span>
+                                        @if (!string.IsNullOrEmpty(item.LabelFa))
+                                        {
+                                            <span class="text-xs text-gray-400 ms-2">(@item.LabelFa)</span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(item.Url))
+                                        {
+                                            <span class="text-xs text-gray-400 ms-2 font-mono">@item.Url</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-xs text-amber-500 ms-2">dropdown only</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    @if (!item.IsVisible)
+                                    {
+                                        <span class="text-xs text-gray-400">hidden</span>
+                                    }
+                                    <button @onclick="() => EditItem(item)" class="text-gray-400 hover:text-brand-blue text-sm">Edit</button>
+                                    <button @onclick="() => DeleteItem(item.Id)" class="text-gray-400 hover:text-red-600 text-sm">Delete</button>
+                                </div>
+                            </div>
+
+                            <!-- Children -->
+                            @{
+                                var children = menuItems.Where(m => m.ParentId == item.Id).OrderBy(m => m.SortOrder).ToList();
+                            }
+                            @if (children.Any())
+                            {
+                                <div class="border-t border-gray-100 bg-gray-50 rounded-b-lg">
+                                    @foreach (var child in children)
+                                    {
+                                        <div class="flex items-center justify-between px-4 py-2 ps-10">
+                                            <div class="flex items-center gap-3 min-w-0">
+                                                <div class="flex flex-col gap-0.5">
+                                                    <button @onclick="() => MoveUp(child)" class="text-gray-400 hover:text-gray-600 text-[10px] leading-none">▲</button>
+                                                    <button @onclick="() => MoveDown(child)" class="text-gray-400 hover:text-gray-600 text-[10px] leading-none">▼</button>
+                                                </div>
+                                                <span class="text-sm text-gray-700">@child.Label</span>
+                                                @if (!string.IsNullOrEmpty(child.Url))
+                                                {
+                                                    <span class="text-xs text-gray-400 font-mono">@child.Url</span>
+                                                }
+                                            </div>
+                                            <div class="flex items-center gap-2">
+                                                <button @onclick="() => EditItem(child)" class="text-gray-400 hover:text-brand-blue text-xs">Edit</button>
+                                                <button @onclick="() => DeleteItem(child.Id)" class="text-gray-400 hover:text-red-600 text-xs">Delete</button>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+            else
+            {
+                <p class="text-sm text-gray-400 text-center py-8">No menu items yet. Add one using the form.</p>
+            }
+        </div>
+    </div>
+
+    <!-- Add/Edit form -->
+    <div>
+        <div class="bg-white rounded-lg border border-gray-200 p-6 sticky top-20">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
+                @(editingItem is not null ? "Edit Item" : "Add Item")
+            </h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Label (English)</label>
+                    <input type="text" @bind="formLabel" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Home" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Label (Persian)</label>
+                    <input type="text" @bind="formLabelFa" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="خانه" dir="rtl" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">URL / Page</label>
+                    <select @bind="formUrl" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm mb-2">
+                        <option value="">-- No link (dropdown parent) --</option>
+                        <option value="/">Home</option>
+                        @foreach (var p in pages)
+                        {
+                            <option value="@p.Slug">@p.Title (@p.Culture)</option>
+                        }
+                    </select>
+                    <input type="text" @bind="formUrl" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Or type custom URL..." />
+                    <p class="text-xs text-gray-400 mt-1">Relative path (e.g. <code>about</code>) or full URL (e.g. <code>https://...</code>)</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Parent</label>
+                    <select @bind="formParentId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                        <option value="">-- Top level --</option>
+                        @foreach (var item in menuItems.Where(m => m.ParentId == null))
+                        {
+                            <option value="@item.Id">@item.Label</option>
+                        }
+                    </select>
+                </div>
+                <div class="flex items-center gap-4">
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" @bind="formOpenNewTab" class="rounded border-gray-300 text-brand-blue" />
+                        <span class="text-xs text-gray-600">Open in new tab</span>
+                    </label>
+                    <label class="flex items-center gap-2">
+                        <input type="checkbox" @bind="formVisible" class="rounded border-gray-300 text-brand-blue" />
+                        <span class="text-xs text-gray-600">Visible</span>
+                    </label>
+                </div>
+                <div class="flex gap-2">
+                    <button @onclick="SaveItem" class="flex-1 px-4 py-2 bg-brand-blue text-white rounded-md text-sm hover:opacity-90 transition-opacity">
+                        @(editingItem is not null ? "Update" : "Add")
+                    </button>
+                    @if (editingItem is not null)
+                    {
+                        <button @onclick="CancelEdit" class="px-4 py-2 border border-gray-300 text-gray-600 rounded-md text-sm hover:bg-gray-50">
+                            Cancel
+                        </button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    private List<NavMenuItem> menuItems = [];
+    private List<Page> pages = [];
+    private string? message;
+    private bool isError;
+
+    // Form state
+    private NavMenuItem? editingItem;
+    private string formLabel = "";
+    private string? formLabelFa;
+    private string formUrl = "";
+    private string formParentId = "";
+    private bool formOpenNewTab;
+    private bool formVisible = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        menuItems = await NavMenuService.GetAllFlatAsync();
+        pages = await PageService.GetAllAsync();
+    }
+
+    private void EditItem(NavMenuItem item)
+    {
+        editingItem = item;
+        formLabel = item.Label;
+        formLabelFa = item.LabelFa;
+        formUrl = item.Url ?? "";
+        formParentId = item.ParentId?.ToString() ?? "";
+        formOpenNewTab = item.OpenInNewTab;
+        formVisible = item.IsVisible;
+    }
+
+    private void CancelEdit()
+    {
+        editingItem = null;
+        ResetForm();
+    }
+
+    private void ResetForm()
+    {
+        formLabel = "";
+        formLabelFa = null;
+        formUrl = "";
+        formParentId = "";
+        formOpenNewTab = false;
+        formVisible = true;
+    }
+
+    private async Task SaveItem()
+    {
+        if (string.IsNullOrWhiteSpace(formLabel))
+        {
+            message = "Label is required.";
+            isError = true;
+            return;
+        }
+
+        try
+        {
+            Guid? parentId = Guid.TryParse(formParentId, out var pid) ? pid : null;
+
+            if (editingItem is not null)
+            {
+                editingItem.Label = formLabel.Trim();
+                editingItem.LabelFa = string.IsNullOrWhiteSpace(formLabelFa) ? null : formLabelFa.Trim();
+                editingItem.Url = string.IsNullOrWhiteSpace(formUrl) ? null : formUrl.Trim();
+                editingItem.ParentId = parentId;
+                editingItem.OpenInNewTab = formOpenNewTab;
+                editingItem.IsVisible = formVisible;
+                await NavMenuService.UpdateAsync(editingItem);
+                message = $"Updated \"{formLabel}\".";
+                editingItem = null;
+            }
+            else
+            {
+                var item = new NavMenuItem
+                {
+                    Label = formLabel.Trim(),
+                    LabelFa = string.IsNullOrWhiteSpace(formLabelFa) ? null : formLabelFa.Trim(),
+                    Url = string.IsNullOrWhiteSpace(formUrl) ? null : formUrl.Trim(),
+                    ParentId = parentId,
+                    OpenInNewTab = formOpenNewTab,
+                    IsVisible = formVisible
+                };
+                await NavMenuService.CreateAsync(item);
+                message = $"Added \"{formLabel}\".";
+            }
+
+            isError = false;
+            ResetForm();
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            message = $"Error: {ex.Message}";
+            isError = true;
+        }
+    }
+
+    private async Task DeleteItem(Guid id)
+    {
+        await NavMenuService.DeleteAsync(id);
+        message = "Item deleted.";
+        isError = false;
+        await LoadData();
+    }
+
+    private async Task MoveUp(NavMenuItem item)
+    {
+        var siblings = menuItems.Where(m => m.ParentId == item.ParentId).OrderBy(m => m.SortOrder).ToList();
+        var idx = siblings.IndexOf(item);
+        if (idx > 0)
+        {
+            (siblings[idx].SortOrder, siblings[idx - 1].SortOrder) = (siblings[idx - 1].SortOrder, siblings[idx].SortOrder);
+            await NavMenuService.ReorderAsync(siblings.OrderBy(s => s.SortOrder).Select(s => s.Id).ToList());
+            await LoadData();
+        }
+    }
+
+    private async Task MoveDown(NavMenuItem item)
+    {
+        var siblings = menuItems.Where(m => m.ParentId == item.ParentId).OrderBy(m => m.SortOrder).ToList();
+        var idx = siblings.IndexOf(item);
+        if (idx < siblings.Count - 1)
+        {
+            (siblings[idx].SortOrder, siblings[idx + 1].SortOrder) = (siblings[idx + 1].SortOrder, siblings[idx].SortOrder);
+            await NavMenuService.ReorderAsync(siblings.OrderBy(s => s.SortOrder).Select(s => s.Id).ToList());
+            await LoadData();
+        }
+    }
+}

@@ -1,0 +1,185 @@
+@using CoderSight.Core.Blocks.Data
+@using CoderSight.Core.Entities
+@using CoderSight.Core.Services
+@using Microsoft.AspNetCore.Components.Authorization
+@inject ICommentService CommentService
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager Nav
+@inject ISiteSettingsService SettingsService
+@rendermode InteractiveServer
+
+@if (!commentsEnabled) { return; }
+
+<section class="py-12 px-4">
+    <div class="max-w-3xl mx-auto">
+        <h2 class="text-2xl font-bold mb-6" style="color: #020817;">
+            Comments
+            @if (comments.Any())
+            {
+                <span class="text-base font-normal" style="color: #64748B;"> (@comments.Count)</span>
+            }
+        </h2>
+
+        <!-- Comment form -->
+        @if (isAuthenticated)
+        {
+            <div class="mb-8 p-5 rounded-xl border" style="border-color: #64748B30; background: #FFFFFF;">
+                @if (submitted)
+                {
+                    <div class="text-center py-4">
+                        <div class="text-lg font-semibold mb-1" style="color: #020817;">Thank you!</div>
+                        <p class="text-sm" style="color: #64748B;">Your comment has been submitted and will appear after admin approval.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="flex items-center gap-2 mb-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background: #020817; color: #2563EB;">
+                            @(userName?.Length > 0 ? userName[0].ToString().ToUpper() : "?")
+                        </div>
+                        <span class="text-sm font-medium" style="color: #020817;">@userName</span>
+                    </div>
+                    <textarea @bind="newComment" rows="3" maxlength="2000" placeholder="Write a comment..."
+                              class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 resize-none"
+                              style="border-color: #64748B40; color: #020817;" />
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <p class="text-sm text-red-600 mt-1">@errorMessage</p>
+                    }
+                    <div class="flex justify-end mt-3">
+                        <button @onclick="SubmitComment" disabled="@submitting"
+                                class="text-sm font-semibold text-white px-5 py-2 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
+                                style="background-color: #2563EB;">
+                            @(submitting ? "Posting..." : "Post Comment")
+                        </button>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="mb-8 p-5 rounded-xl border text-center" style="border-color: #64748B30; background: #FFFFFF;">
+                <p class="text-sm mb-3" style="color: #64748B;">Sign in to leave a comment.</p>
+                <a href="/login?returnUrl=@Uri.EscapeDataString(Nav.Uri)"
+                   class="inline-block text-sm font-semibold text-white px-5 py-2 rounded-lg hover:opacity-90 transition-opacity"
+                   style="background-color: #2563EB;">
+                    Sign In
+                </a>
+                <a href="/register?returnUrl=@Uri.EscapeDataString(Nav.Uri)"
+                   class="inline-block text-sm font-semibold px-5 py-2 rounded-lg border hover:opacity-90 transition-opacity ms-2"
+                   style="color: #020817; border-color: #64748B40;">
+                    Create Account
+                </a>
+            </div>
+        }
+
+        <!-- Approved comments -->
+        @if (comments.Any())
+        {
+            <div class="space-y-4">
+                @foreach (var comment in comments)
+                {
+                    <div class="p-4 rounded-lg border" style="border-color: #64748B20; background: #FFFFFF;">
+                        <div class="flex items-center gap-2 mb-2">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background: #020817; color: #2563EB;">
+                                @(comment.UserDisplayName.Length > 0 ? comment.UserDisplayName[0].ToString().ToUpper() : "?")
+                            </div>
+                            <div>
+                                <span class="text-sm font-semibold" style="color: #020817;">@comment.UserDisplayName</span>
+                                <span class="text-xs ms-2" style="color: #64748B;">@comment.CreatedAt.ToString("MMM d, yyyy")</span>
+                            </div>
+                        </div>
+                        <p class="text-sm leading-relaxed" style="color: #1A2233;">@comment.Body</p>
+                    </div>
+                }
+            </div>
+        }
+        else if (!submitted)
+        {
+            <div class="text-center py-8" style="color: #64748B;">
+                <p class="text-sm">No comments yet. Be the first to share your thoughts!</p>
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public CommentsBlockData? Data { get; set; }
+    [Parameter] public Guid? BlogPostId { get; set; }
+    [CascadingParameter] public Page? CurrentPage { get; set; }
+
+    private List<BlogComment> comments = [];
+    private string? userName;
+    private string? userId;
+    private string? userAvatar;
+    private bool isAuthenticated;
+    private bool commentsEnabled = true;
+    private string newComment = "";
+    private string? errorMessage;
+    private bool submitting;
+    private bool submitted;
+    private Guid? blogPostId;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var siteSettings = await SettingsService.GetAsync();
+        commentsEnabled = siteSettings?.EnableBlogComments ?? true;
+        if (!commentsEnabled) return;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        isAuthenticated = user.Identity?.IsAuthenticated == true;
+
+        if (isAuthenticated)
+        {
+            userName = user.Identity?.Name?.Split('@')[0] ?? "User";
+            userId = user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        }
+
+        await LoadComments();
+    }
+
+    private async Task LoadComments()
+    {
+        blogPostId ??= BlogPostId ?? CurrentPage?.BlogPost?.Id;
+
+        if (blogPostId.HasValue)
+            comments = await CommentService.GetApprovedAsync(blogPostId.Value);
+    }
+
+    private async Task SubmitComment()
+    {
+        if (string.IsNullOrWhiteSpace(newComment))
+        {
+            errorMessage = "Please write a comment.";
+            return;
+        }
+
+        if (newComment.Length > 2000)
+        {
+            errorMessage = "Comment is too long (max 2000 characters).";
+            return;
+        }
+
+        if (!isAuthenticated || string.IsNullOrEmpty(userId) || !blogPostId.HasValue)
+            return;
+
+        submitting = true;
+        errorMessage = null;
+
+        try
+        {
+            await CommentService.AddAsync(blogPostId.Value, userId, userName ?? "User", userAvatar, newComment.Trim());
+            newComment = "";
+            submitted = true;
+        }
+        catch
+        {
+            errorMessage = "Failed to post comment. Please try again.";
+        }
+        finally
+        {
+            submitting = false;
+        }
+    }
+}

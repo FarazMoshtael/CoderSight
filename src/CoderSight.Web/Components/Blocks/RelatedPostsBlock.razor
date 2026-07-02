@@ -1,0 +1,21 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-12 px-4 bg-gray-50">
+    <div class="max-w-4xl mx-auto">
+        <h2 class="text-2xl font-bold text-gray-900 mb-8">@(Data?.Title ?? "Related Posts")</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            @for (int i = 0; i < (Data?.MaxPosts ?? 3); i++)
+            {
+                <div class="bg-white rounded-lg border border-gray-200 p-5">
+                    <div class="h-32 bg-gray-200 rounded mb-4"></div>
+                    <p class="text-sm text-gray-400 mb-2">Related post placeholder</p>
+                    <p class="text-xs text-gray-400">Posts will be loaded dynamically</p>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public RelatedPostsBlockData? Data { get; set; }
+}

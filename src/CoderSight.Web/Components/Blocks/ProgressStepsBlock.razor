@@ -1,0 +1,59 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-16 px-4">
+    <div class="max-w-4xl mx-auto">
+        @if (!string.IsNullOrEmpty(Data?.SectionTitle))
+        {
+            <h2 class="text-2xl sm:text-3xl font-bold text-center text-brand-navy mb-10 md:mb-12">@Data.SectionTitle</h2>
+        }
+
+        @if (Data?.Steps is not null)
+        {
+            <!-- Mobile: vertical stack -->
+            <div class="flex flex-col gap-6 md:hidden">
+                @for (int i = 0; i < Data.Steps.Count; i++)
+                {
+                    var step = Data.Steps[i];
+                    <div class="flex items-start gap-4">
+                        <div class="flex-none w-10 h-10 bg-brand-blue text-white rounded-full flex items-center justify-center font-semibold text-sm">
+                            @(i + 1)
+                        </div>
+                        <div class="pt-1">
+                            <h3 class="font-semibold text-brand-navy mb-1">@step.Title</h3>
+                            @if (!string.IsNullOrEmpty(step.Description))
+                            {
+                                <p class="text-sm text-brand-slate">@step.Description</p>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Desktop: horizontal with connectors -->
+            <div class="hidden md:flex items-start justify-between">
+                @for (int i = 0; i < Data.Steps.Count; i++)
+                {
+                    var step = Data.Steps[i];
+                    <div class="flex-1 text-center">
+                        <div class="w-10 h-10 bg-brand-blue text-white rounded-full flex items-center justify-center mx-auto mb-3 font-semibold">
+                            @(i + 1)
+                        </div>
+                        <h3 class="font-medium text-gray-900 mb-1">@step.Title</h3>
+                        @if (!string.IsNullOrEmpty(step.Description))
+                        {
+                            <p class="text-sm text-brand-slate">@step.Description</p>
+                        }
+                    </div>
+                    @if (i < Data.Steps.Count - 1)
+                    {
+                        <div class="flex-shrink-0 w-8 h-0.5 bg-gray-300 mt-5 mx-1"></div>
+                    }
+                }
+            </div>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public ProgressStepsBlockData? Data { get; set; }
+}

@@ -1,0 +1,171 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+        @if (!string.IsNullOrEmpty(Data?.SectionTitle))
+        {
+            <h2 class="text-3xl font-bold text-center text-brand-navy mb-2">@Data.SectionTitle</h2>
+        }
+        @if (!string.IsNullOrEmpty(Data?.SectionSubtitle))
+        {
+            <p class="text-center text-brand-slate mb-10 max-w-2xl mx-auto">@Data.SectionSubtitle</p>
+        }
+
+        @if (Data?.Cards is not null && Data.Cards.Any())
+        {
+            var uid = "cs-carousel-" + _uid;
+            <div class="cs-carousel-wrapper" id="@uid">
+                <button class="cs-carousel-arrow cs-carousel-prev" onclick="csCarouselScroll('@uid', -1)" aria-label="Previous">‹</button>
+                <div class="cs-carousel-track">
+                    @foreach (var card in Data.Cards)
+                    {
+                        <div class="cs-carousel-card">
+                            @if (!string.IsNullOrEmpty(card.Badge))
+                            {
+                                <div class="cs-carousel-badge">@card.Badge</div>
+                            }
+                            @if (!string.IsNullOrEmpty(card.ImageUrl))
+                            {
+                                <img src="@card.ImageUrl" alt="@card.Title" class="cs-carousel-img" />
+                            }
+                            <div class="cs-carousel-body">
+                                <h3 class="cs-carousel-title">@card.Title</h3>
+                                @if (!string.IsNullOrEmpty(card.Description))
+                                {
+                                    <p class="cs-carousel-desc">@card.Description</p>
+                                }
+                                @if (!string.IsNullOrEmpty(card.LinkText))
+                                {
+                                    <a href="@card.LinkUrl" class="cs-carousel-link">@card.LinkText →</a>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+                <button class="cs-carousel-arrow cs-carousel-next" onclick="csCarouselScroll('@uid', 1)" aria-label="Next">›</button>
+            </div>
+
+            @if (Data.AutoPlay)
+            {
+                <script>
+                    (function() {
+                        var id = '@uid';
+                        var interval = @(Data.AutoPlayInterval) * 1000;
+                        var timer;
+                        function start() {
+                            timer = setInterval(function() { csCarouselScroll(id, 1); }, interval);
+                        }
+                        var el = document.getElementById(id);
+                        if (el) {
+                            el.addEventListener('mouseenter', function() { clearInterval(timer); });
+                            el.addEventListener('mouseleave', start);
+                            start();
+                        }
+                    })();
+                </script>
+            }
+        }
+    </div>
+</section>
+
+<style>
+    .cs-carousel-wrapper {
+        position: relative;
+    }
+    .cs-carousel-track {
+        display: flex;
+        gap: 1.5rem;
+        overflow-x: auto;
+        scroll-behavior: smooth;
+        scroll-snap-type: x mandatory;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+        padding: 0.5rem 0;
+    }
+    .cs-carousel-track::-webkit-scrollbar { display: none; }
+    .cs-carousel-card {
+        flex: 0 0 300px;
+        scroll-snap-align: start;
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 1rem;
+        overflow: hidden;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+    }
+    .cs-carousel-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.1);
+    }
+    .cs-carousel-badge {
+        position: absolute;
+        top: 12px;
+        left: 12px;
+        background: #2563eb;
+        color: #fff;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 3px 10px;
+        border-radius: 999px;
+        z-index: 1;
+    }
+    .cs-carousel-img {
+        width: 100%;
+        height: 180px;
+        object-fit: cover;
+    }
+    .cs-carousel-body {
+        padding: 1.25rem;
+    }
+    .cs-carousel-title {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #111827;
+        margin: 0 0 0.5rem;
+    }
+    .cs-carousel-desc {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin: 0 0 1rem;
+        line-height: 1.5;
+    }
+    .cs-carousel-link {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #2563eb;
+        text-decoration: none;
+    }
+    .cs-carousel-link:hover { text-decoration: underline; }
+    .cs-carousel-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 2;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.95);
+        border: 1px solid #e5e7eb;
+        font-size: 1.5rem;
+        color: #374151;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: background 0.2s;
+    }
+    .cs-carousel-arrow:hover { background: #f3f4f6; }
+    .cs-carousel-prev { left: -16px; }
+    .cs-carousel-next { right: -16px; }
+    @@media (max-width: 640px) {
+        .cs-carousel-card { flex: 0 0 260px; }
+        .cs-carousel-prev { left: 4px; }
+        .cs-carousel-next { right: 4px; }
+    }
+</style>
+
+@code {
+    [Parameter] public CardCarouselBlockData? Data { get; set; }
+    private string _uid = Guid.NewGuid().ToString("N")[..8];
+}

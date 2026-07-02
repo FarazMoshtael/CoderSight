@@ -1,0 +1,25 @@
+@using CoderSight.Core.Blocks.Data
+
+@if (!dismissed)
+{
+    <div class="px-4 py-3 @(Data?.Style == "warning" ? "bg-yellow-50 text-yellow-800" : Data?.Style == "danger" ? "bg-red-50 text-red-800" : Data?.Style == "success" ? "bg-green-50 text-green-800" : "bg-blue-50 text-blue-800")">
+        <div class="max-w-6xl mx-auto flex items-center justify-between">
+            <p class="text-sm font-medium">
+                @Data?.Message
+                @if (!string.IsNullOrEmpty(Data?.LinkText))
+                {
+                    <a href="@Data?.LinkUrl" class="underline ms-2 font-semibold">@Data.LinkText</a>
+                }
+            </p>
+            @if (Data?.Dismissable == true)
+            {
+                <button @onclick="() => dismissed = true" class="text-current opacity-50 hover:opacity-100">✕</button>
+            }
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public BannerBlockData? Data { get; set; }
+    private bool dismissed;
+}

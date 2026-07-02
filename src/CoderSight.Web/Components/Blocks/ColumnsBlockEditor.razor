@@ -1,0 +1,181 @@
+@using System.Text.Json
+@using CoderSight.Core.Blocks
+@using CoderSight.Core.Blocks.Data
+@inject BlockRegistry BlockRegistry
+
+<div class="space-y-4">
+    <div class="grid grid-cols-2 gap-4">
+        <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Column Count</label>
+            <select class="w-full border border-gray-200 rounded px-3 py-2 text-sm" value="@columnsData.ColumnCount"
+                    @onchange="OnColumnCountChanged">
+                <option value="2">2 Columns</option>
+                <option value="3">3 Columns</option>
+                <option value="4">4 Columns</option>
+            </select>
+        </div>
+        <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">Gap</label>
+            <input type="text" class="w-full border border-gray-200 rounded px-3 py-2 text-sm"
+                   value="@columnsData.Gap" @onchange="OnGapChanged" />
+        </div>
+    </div>
+
+    @for (int i = 0; i < columnsData.Columns.Count; i++)
+    {
+        var colIdx = i;
+        var col = columnsData.Columns[colIdx];
+        <div class="border border-gray-200 rounded-lg bg-white">
+            <div class="flex items-center justify-between px-4 py-2 bg-gray-50 rounded-t-lg border-b border-gray-200">
+                <span class="text-xs font-semibold text-gray-700 uppercase tracking-wider">Column @(colIdx + 1)</span>
+                <div class="flex items-center gap-2">
+                    <label class="text-xs text-gray-500">Width:</label>
+                    <input type="text" class="border border-gray-200 rounded px-2 py-1 text-xs w-20"
+                           placeholder="auto" value="@col.Width"
+                           @onchange="e => { col.Width = e.Value?.ToString(); NotifyChanged(); }" />
+                </div>
+            </div>
+            <div class="p-3 space-y-2">
+                @for (int j = 0; j < col.Blocks.Count; j++)
+                {
+                    var blockIdx = j;
+                    var nested = col.Blocks[blockIdx];
+                    var reg = BlockRegistry.Get(nested.BlockType);
+                    <div class="border border-gray-200 rounded p-3 bg-gray-50">
+                        <div class="flex justify-between items-center mb-2">
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-medium">@nested.BlockType</span>
+                                <span class="text-xs text-gray-400">#@(blockIdx + 1)</span>
+                            </div>
+                            <div class="flex gap-1">
+                                <button type="button" class="text-gray-400 hover:text-gray-600 text-xs px-1" disabled="@(blockIdx == 0)"
+                                        @onclick="() => MoveNestedBlock(col, blockIdx, -1)">↑</button>
+                                <button type="button" class="text-gray-400 hover:text-gray-600 text-xs px-1" disabled="@(blockIdx >= col.Blocks.Count - 1)"
+                                        @onclick="() => MoveNestedBlock(col, blockIdx, 1)">↓</button>
+                                <button type="button" class="text-red-400 hover:text-red-600 text-xs px-1"
+                                        @onclick="() => RemoveNestedBlock(col, blockIdx)">✕</button>
+                            </div>
+                        </div>
+                        <CoderSight.Web.Components.Shared.BlockDataEditor
+                            BlockType="@nested.BlockType"
+                            Data="@nested.Data"
+                            DataChanged="@(json => { nested.Data = json; NotifyChanged(); })" />
+                    </div>
+                }
+
+                @if (pickerOpenForColumn == colIdx)
+                {
+                    <div class="bg-white rounded border border-gray-200 p-3">
+                        <h4 class="text-xs font-medium text-gray-600 mb-2">Add block to Column @(colIdx + 1)</h4>
+                        <div class="grid grid-cols-2 gap-1.5">
+                            @foreach (var category in BlockRegistry.GetCategories())
+                            {
+                                @foreach (var blockReg in BlockRegistry.GetByCategory(category))
+                                {
+                                    @if (blockReg.Name != "Columns")
+                                    {
+                                        <button type="button" @onclick="() => AddNestedBlock(col, blockReg.Name)"
+                                                class="text-left px-2 py-1.5 bg-gray-50 border border-gray-200 rounded hover:border-indigo-400 hover:bg-indigo-50 text-xs transition-colors truncate">
+                                            @blockReg.Name
+                                        </button>
+                                    }
+                                }
+                            }
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <button type="button" @onclick="() => pickerOpenForColumn = colIdx"
+                            class="w-full border-2 border-dashed border-gray-300 rounded px-3 py-2 text-xs text-gray-500 hover:border-indigo-400 hover:text-indigo-500 transition-colors">
+                        + Add Block
+                    </button>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Data { get; set; } = "{}";
+    [Parameter] public EventCallback<string> DataChanged { get; set; }
+
+    private ColumnsBlockData columnsData = new();
+    private int? pickerOpenForColumn;
+
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    protected override void OnParametersSet()
+    {
+        try
+        {
+            columnsData = JsonSerializer.Deserialize<ColumnsBlockData>(Data ?? "{}", JsonOpts) ?? new();
+        }
+        catch
+        {
+            columnsData = new();
+        }
+        EnsureColumns();
+    }
+
+    private void EnsureColumns()
+    {
+        while (columnsData.Columns.Count < columnsData.ColumnCount)
+            columnsData.Columns.Add(new ColumnContent());
+        while (columnsData.Columns.Count > columnsData.ColumnCount)
+            columnsData.Columns.RemoveAt(columnsData.Columns.Count - 1);
+    }
+
+    private void OnGapChanged(ChangeEventArgs e)
+    {
+        columnsData.Gap = e.Value?.ToString() ?? "1.5rem";
+        NotifyChanged();
+    }
+
+    private void OnColumnCountChanged(ChangeEventArgs e)
+    {
+        if (int.TryParse(e.Value?.ToString(), out var count) && count >= 2 && count <= 4)
+        {
+            columnsData.ColumnCount = count;
+            EnsureColumns();
+            NotifyChanged();
+        }
+    }
+
+    private void AddNestedBlock(ColumnContent col, string blockType)
+    {
+        col.Blocks.Add(new NestedBlock { BlockType = blockType, Data = "{}" });
+        pickerOpenForColumn = null;
+        NotifyChanged();
+    }
+
+    private void RemoveNestedBlock(ColumnContent col, int index)
+    {
+        if (index < col.Blocks.Count)
+        {
+            col.Blocks.RemoveAt(index);
+            NotifyChanged();
+        }
+    }
+
+    private void MoveNestedBlock(ColumnContent col, int index, int direction)
+    {
+        var newIndex = index + direction;
+        if (newIndex >= 0 && newIndex < col.Blocks.Count)
+        {
+            (col.Blocks[index], col.Blocks[newIndex]) = (col.Blocks[newIndex], col.Blocks[index]);
+            NotifyChanged();
+        }
+    }
+
+    private async void NotifyChanged()
+    {
+        var json = JsonSerializer.Serialize(columnsData, JsonOpts);
+        await DataChanged.InvokeAsync(json);
+        StateHasChanged();
+    }
+}

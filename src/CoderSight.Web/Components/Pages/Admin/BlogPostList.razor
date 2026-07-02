@@ -1,0 +1,133 @@
+@page "/admin/blog"
+@layout AdminLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Editor")]
+@inject IBlogService BlogService
+@inject ISiteSettingsService SettingsService
+@rendermode InteractiveServer
+
+<PageTitle>Blog Posts — @SiteName Admin</PageTitle>
+
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Blog Posts</h1>
+        <p class="text-sm text-gray-500 mt-1">Manage your blog content</p>
+    </div>
+    <a href="/admin/blog/new" class="bg-indigo-600 text-white px-4 py-2 rounded-md text-sm hover:bg-indigo-700 transition-colors">
+        + New Post
+    </a>
+</div>
+
+<div class="flex space-x-2 mb-4">
+    <button class="px-3 py-1 text-sm rounded-md @(filterCulture == "en" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600")"
+            @onclick='() => SetFilter("en")'>English</button>
+    <button class="px-3 py-1 text-sm rounded-md @(filterCulture == "fa" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600")"
+            @onclick='() => SetFilter("fa")'>فارسی</button>
+</div>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="mb-4 px-4 py-3 rounded-md text-sm @(isError ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700")">@message</div>
+}
+
+<div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+    <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+            <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categories</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Featured</th>
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            @foreach (var post in posts)
+            {
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <a href="@($"/admin/blog/edit/{post.Id}")" class="text-sm font-medium text-gray-900 hover:text-indigo-600">
+                            @post.Page.Title
+                        </a>
+                        <p class="text-xs text-gray-400">@post.Excerpt[..Math.Min(60, post.Excerpt.Length)]...</p>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        @string.Join(", ", post.BlogPostCategories.Select(bc => bc.Category.Name))
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-xs px-2 py-1 rounded-full @(post.Page.Status == CoderSight.Core.Enums.PageStatus.Published ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700")">
+                            @post.Page.Status
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                        @if (post.IsFeatured)
+                        {
+                            <span class="text-amber-500">★</span>
+                        }
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm space-x-2">
+                        <a href="@($"/admin/blog/edit/{post.Id}")" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                        <a href="@(isMultilingual ? $"/{post.Page.Culture}/{post.Page.Slug}" : $"/{post.Page.Slug}")" target="_blank" class="text-gray-500 hover:text-gray-700">View</a>
+                        @if (confirmDeleteId == post.Id)
+                        {
+                            <button @onclick="() => DeletePost(post.Id)" class="text-red-600 hover:text-red-800 font-medium">Confirm</button>
+                            <button @onclick="() => confirmDeleteId = null" class="text-gray-400 hover:text-gray-600">Cancel</button>
+                        }
+                        else
+                        {
+                            <button @onclick="() => confirmDeleteId = post.Id" class="text-red-400 hover:text-red-600">Delete</button>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@code {
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    private List<BlogPost> posts = [];
+    private string filterCulture = "en";
+    private Guid? confirmDeleteId;
+    private string? message;
+    private bool isError;
+    private bool isMultilingual = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var settings = await SettingsService.GetAsync();
+        isMultilingual = settings?.EnableMultilingual ?? true;
+        await LoadPosts();
+    }
+
+    private async Task LoadPosts()
+    {
+        var (result, _) = await BlogService.GetPostsAsync(filterCulture, pageSize: 100, publishedOnly: false);
+        posts = result;
+    }
+
+    private async Task SetFilter(string culture)
+    {
+        filterCulture = culture;
+        confirmDeleteId = null;
+        await LoadPosts();
+    }
+
+    private async Task DeletePost(Guid id)
+    {
+        try
+        {
+            await BlogService.DeleteAsync(id);
+            posts.RemoveAll(p => p.Id == id);
+            confirmDeleteId = null;
+            message = "Post deleted.";
+            isError = false;
+        }
+        catch (Exception ex)
+        {
+            message = $"Delete failed: {ex.Message}";
+            isError = true;
+        }
+    }
+}

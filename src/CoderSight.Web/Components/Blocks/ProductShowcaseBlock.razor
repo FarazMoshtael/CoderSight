@@ -1,0 +1,225 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-16 px-4">
+    <div class="max-w-6xl mx-auto">
+        @if (!string.IsNullOrEmpty(Data?.SectionTitle))
+        {
+            <h2 class="text-3xl font-bold text-center text-gray-900 mb-2">@Data.SectionTitle</h2>
+        }
+        @if (!string.IsNullOrEmpty(Data?.SectionSubtitle))
+        {
+            <p class="text-center text-gray-500 mb-10 max-w-2xl mx-auto">@Data.SectionSubtitle</p>
+        }
+
+        @if (Data?.Products is not null && Data.Products.Any())
+        {
+            var cols = Data.Columns switch { 2 => "sm:grid-cols-2", 4 => "sm:grid-cols-2 lg:grid-cols-4", _ => "sm:grid-cols-2 lg:grid-cols-3" };
+            <div class="grid grid-cols-1 @cols gap-6">
+                @foreach (var (product, index) in Data.Products.Select((p, i) => (p, i)))
+                {
+                    <div class="cs-product-card cs-anim-@Data.Animation" style="animation-delay: @(index * 120)ms">
+                        @if (!string.IsNullOrEmpty(product.Badge))
+                        {
+                            <div class="cs-product-badge">@product.Badge</div>
+                        }
+                        @if (!string.IsNullOrEmpty(product.ImageUrl))
+                        {
+                            <div class="cs-product-img-wrap">
+                                <img src="@product.ImageUrl" alt="@product.Title" class="cs-product-img" />
+                            </div>
+                        }
+                        <div class="cs-product-body">
+                            <h3 class="cs-product-title">@product.Title</h3>
+                            @if (product.Rating > 0)
+                            {
+                                <div class="cs-product-rating">
+                                    @for (int i = 1; i <= 5; i++)
+                                    {
+                                        var star = i;
+                                        @if (star <= (int)product.Rating)
+                                        {
+                                            <span class="cs-star cs-star-full">★</span>
+                                        }
+                                        else if (star - product.Rating < 1 && star - product.Rating > 0)
+                                        {
+                                            <span class="cs-star cs-star-half">★</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="cs-star cs-star-empty">★</span>
+                                        }
+                                    }
+                                    <span class="cs-rating-num">@product.Rating.ToString("0.0")</span>
+                                </div>
+                            }
+                            @if (!string.IsNullOrEmpty(product.Description))
+                            {
+                                <p class="cs-product-desc">@product.Description</p>
+                            }
+                            <div class="cs-product-footer">
+                                @if (!string.IsNullOrEmpty(product.Price))
+                                {
+                                    <div class="cs-product-price">
+                                        <span class="cs-price-current">@product.Price</span>
+                                        @if (!string.IsNullOrEmpty(product.OriginalPrice))
+                                        {
+                                            <span class="cs-price-original">@product.OriginalPrice</span>
+                                        }
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(product.LinkText))
+                                {
+                                    <a href="@product.LinkUrl" class="cs-product-btn">@product.LinkText</a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>
+
+<style>
+    .cs-product-card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 1rem;
+        overflow: hidden;
+        position: relative;
+        transition: transform 0.35s ease, box-shadow 0.35s ease;
+    }
+    .cs-product-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+    }
+    .cs-product-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        color: #fff;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 3px 10px;
+        border-radius: 999px;
+        z-index: 1;
+        letter-spacing: 0.02em;
+    }
+    .cs-product-img-wrap {
+        overflow: hidden;
+    }
+    .cs-product-img {
+        width: 100%;
+        height: 220px;
+        object-fit: cover;
+        transition: transform 0.5s ease;
+    }
+    .cs-product-card:hover .cs-product-img {
+        transform: scale(1.08);
+    }
+    .cs-product-body {
+        padding: 1.25rem;
+    }
+    .cs-product-title {
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: #111827;
+        margin: 0 0 0.4rem;
+    }
+    .cs-product-rating {
+        display: flex;
+        align-items: center;
+        gap: 1px;
+        margin-bottom: 0.5rem;
+    }
+    .cs-star { font-size: 0.85rem; }
+    .cs-star-full { color: #f59e0b; }
+    .cs-star-half { color: #f59e0b; opacity: 0.5; }
+    .cs-star-empty { color: #d1d5db; }
+    .cs-rating-num {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-left: 4px;
+    }
+    .cs-product-desc {
+        font-size: 0.85rem;
+        color: #6b7280;
+        margin: 0 0 1rem;
+        line-height: 1.5;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    .cs-product-footer {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .cs-product-price {
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+    }
+    .cs-price-current {
+        font-size: 1.15rem;
+        font-weight: 700;
+        color: #111827;
+    }
+    .cs-price-original {
+        font-size: 0.85rem;
+        color: #9ca3af;
+        text-decoration: line-through;
+    }
+    .cs-product-btn {
+        display: inline-block;
+        padding: 0.45rem 1rem;
+        background: #2563eb;
+        color: #fff;
+        font-size: 0.8rem;
+        font-weight: 500;
+        border-radius: 0.5rem;
+        text-decoration: none;
+        transition: background 0.2s;
+    }
+    .cs-product-btn:hover { background: #1d4ed8; }
+
+    /* Animations */
+    .cs-anim-fade-up {
+        opacity: 0;
+        transform: translateY(30px);
+        animation: csFadeUp 0.6s ease forwards;
+    }
+    .cs-anim-fade-in {
+        opacity: 0;
+        animation: csFadeIn 0.6s ease forwards;
+    }
+    .cs-anim-scale {
+        opacity: 0;
+        transform: scale(0.9);
+        animation: csScaleIn 0.5s ease forwards;
+    }
+    .cs-anim-slide-left {
+        opacity: 0;
+        transform: translateX(-30px);
+        animation: csSlideLeft 0.6s ease forwards;
+    }
+
+    @@keyframes csFadeUp {
+        to { opacity: 1; transform: translateY(0); }
+    }
+    @@keyframes csFadeIn {
+        to { opacity: 1; }
+    }
+    @@keyframes csScaleIn {
+        to { opacity: 1; transform: scale(1); }
+    }
+    @@keyframes csSlideLeft {
+        to { opacity: 1; transform: translateX(0); }
+    }
+</style>
+
+@code {
+    [Parameter] public ProductShowcaseBlockData? Data { get; set; }
+}

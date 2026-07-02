@@ -1,0 +1,95 @@
+@page "/login"
+@inject ISiteSettingsService SettingsService
+
+<PageTitle>Sign In — @SiteName</PageTitle>
+
+@if (!registrationEnabled)
+{
+    <div class="min-h-[70vh] flex items-center justify-center py-12 px-4">
+        <div class="text-center">
+            <h1 class="text-2xl font-bold mb-2" style="color: #020817;">Sign In Disabled</h1>
+            <p class="text-sm" style="color: #64748B;">Public authentication is currently disabled.</p>
+            <a href="/" class="inline-block mt-4 text-sm font-semibold hover:underline" style="color: #2563EB;">Back to Home</a>
+        </div>
+    </div>
+}
+else
+{
+<div class="min-h-[70vh] flex items-center justify-center py-12 px-4">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-8 w-full max-w-md">
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold" style="color: #020817;">Sign In</h1>
+            <p class="text-sm mt-2" style="color: #64748B;">Welcome back to CoderSight</p>
+        </div>
+
+        @if (ErrorParam == "locked")
+        {
+            <div class="mb-4 px-4 py-3 rounded-md text-sm bg-red-50 text-red-700">
+                Account locked due to too many failed attempts. Please try again in 15 minutes.
+            </div>
+        }
+        else if (HasError)
+        {
+            <div class="mb-4 px-4 py-3 rounded-md text-sm bg-red-50 text-red-700">
+                Invalid email or password.
+            </div>
+        }
+
+        <form method="post" action="/api/auth/login" data-enhance="false">
+            <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+
+            <div style="position:absolute;left:-9999px;" aria-hidden="true"><textarea name="cs_hp" tabindex="-1" autocomplete="off" rows="1"></textarea></div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1" style="color: #020817;">Email</label>
+                    <input type="email" name="email" required
+                           class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
+                           style="border-color: #64748B40; color: #020817;"
+                           placeholder="you@example.com" />
+                </div>
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-sm font-medium" style="color: #020817;">Password</label>
+                        <a href="/forgot-password" class="text-xs hover:underline" style="color: #2563EB;">Forgot password?</a>
+                    </div>
+                    <input type="password" name="password" required
+                           class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
+                           style="border-color: #64748B40; color: #020817;" />
+                </div>
+                <button type="submit" class="w-full text-white py-2.5 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+                        style="background-color: #2563EB;">
+                    Sign In
+                </button>
+            </div>
+        </form>
+
+        <p class="text-center text-sm mt-6" style="color: #64748B;">
+            Don't have an account?
+            <a href="/register@(!string.IsNullOrEmpty(ReturnUrl) ? $"?returnUrl={Uri.EscapeDataString(ReturnUrl)}" : "")"
+               class="font-semibold hover:underline" style="color: #2563EB;">
+                Create one
+            </a>
+        </p>
+    </div>
+</div>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? ErrorParam { get; set; }
+
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    private bool registrationEnabled = true;
+    private bool HasError => ErrorParam == "1";
+
+    protected override async Task OnInitializedAsync()
+    {
+        var s = await SettingsService.GetAsync();
+        registrationEnabled = s?.EnableUserRegistration ?? true;
+    }
+}

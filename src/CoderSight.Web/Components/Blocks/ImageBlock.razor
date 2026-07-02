@@ -1,0 +1,15 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-8 px-4">
+    <div class="max-w-4xl mx-auto @(Data?.Size == "medium" ? "max-w-2xl" : Data?.Size == "small" ? "max-w-md" : "")">
+        <img src="@Data?.ImageUrl" alt="@Data?.AltText" class="w-full rounded-lg" />
+        @if (!string.IsNullOrEmpty(Data?.Caption))
+        {
+            <p class="text-sm text-gray-500 text-center mt-3">@Data.Caption</p>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public ImageBlockData? Data { get; set; }
+}

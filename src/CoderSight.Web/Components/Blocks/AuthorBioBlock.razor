@@ -1,0 +1,40 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-8 px-4">
+    <div class="max-w-3xl mx-auto bg-gray-50 rounded-xl p-6 flex items-start gap-4">
+        @if (!string.IsNullOrEmpty(Data?.ImageUrl))
+        {
+            <img src="@Data.ImageUrl" alt="@Data?.Name" class="w-16 h-16 rounded-full object-cover" />
+        }
+        else
+        {
+            <div class="w-16 h-16 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center text-xl font-bold flex-shrink-0">
+                @(Data?.Name?.Length > 0 ? Data.Name[..1] : "A")
+            </div>
+        }
+        <div>
+            <h3 class="font-semibold text-gray-900">@Data?.Name</h3>
+            @if (!string.IsNullOrEmpty(Data?.Bio))
+            {
+                <p class="text-sm text-gray-600 mt-1">@Data.Bio</p>
+            }
+            <div class="flex gap-3 mt-3">
+                @if (!string.IsNullOrEmpty(Data?.GitHubUrl)) { <a href="@EnsureAbsoluteUrl(Data.GitHubUrl)" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-gray-600 text-sm">GitHub</a> }
+                @if (!string.IsNullOrEmpty(Data?.TwitterUrl)) { <a href="@EnsureAbsoluteUrl(Data.TwitterUrl)" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-gray-600 text-sm">Twitter</a> }
+                @if (!string.IsNullOrEmpty(Data?.LinkedInUrl)) { <a href="@EnsureAbsoluteUrl(Data.LinkedInUrl)" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-gray-600 text-sm">LinkedIn</a> }
+                @if (!string.IsNullOrEmpty(Data?.WebsiteUrl)) { <a href="@EnsureAbsoluteUrl(Data.WebsiteUrl)" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-gray-600 text-sm">Website</a> }
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public AuthorBioBlockData? Data { get; set; }
+
+    private static string EnsureAbsoluteUrl(string? url)
+    {
+        if (string.IsNullOrEmpty(url)) return "#";
+        if (url.StartsWith("http://") || url.StartsWith("https://")) return url;
+        return "https://" + url;
+    }
+}

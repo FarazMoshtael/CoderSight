@@ -1,0 +1,252 @@
+@using CoderSight.Core.Blocks.Data
+
+@if (Data?.Slides is not null && Data.Slides.Count > 0)
+{
+    var uid = "cs-slider-" + _uid;
+    <section class="cs-slider" id="@uid">
+        <div class="cs-slider-track">
+            @for (var i = 0; i < Data.Slides.Count; i++)
+            {
+                var slide = Data.Slides[i];
+                var bgGradients = new[] {
+                    "linear-gradient(135deg, #020817, #1A2233)",
+                    "linear-gradient(135deg, #1A2233, #2563EB)",
+                    "linear-gradient(135deg, #020817, #1A2233 80%)"
+                };
+                var bgStyle = !string.IsNullOrEmpty(slide.ImageUrl)
+                    ? ""
+                    : $"background: {bgGradients[i % bgGradients.Length]};";
+                <div class="cs-slider-slide @(i == 0 ? "cs-slider-active" : "")" data-index="@i" style="@bgStyle">
+                    @if (!string.IsNullOrEmpty(slide.ImageUrl))
+                    {
+                        <img src="@slide.ImageUrl" alt="@(slide.Title ?? "")" class="cs-slider-img" />
+                        <div class="cs-slider-overlay"></div>
+                    }
+                    @if (!string.IsNullOrEmpty(slide.Title) || !string.IsNullOrEmpty(slide.Subtitle) || !string.IsNullOrEmpty(slide.ButtonText))
+                    {
+                        <div class="cs-slider-content">
+                            @if (!string.IsNullOrEmpty(slide.Title))
+                            {
+                                <h2 class="cs-slider-title">@slide.Title</h2>
+                            }
+                            @if (!string.IsNullOrEmpty(slide.Subtitle))
+                            {
+                                <p class="cs-slider-subtitle">@slide.Subtitle</p>
+                            }
+                            @if (!string.IsNullOrEmpty(slide.ButtonText))
+                            {
+                                <a href="@(slide.ButtonLink ?? "#")" class="cs-slider-btn">@slide.ButtonText</a>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        @if (Data.ShowArrows && Data.Slides.Count > 1)
+        {
+            <button class="cs-slider-arrow cs-slider-prev" onclick="csSliderNav('@uid', -1)" aria-label="Previous">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <button class="cs-slider-arrow cs-slider-next" onclick="csSliderNav('@uid', 1)" aria-label="Next">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+        }
+
+        @if (Data.ShowDots && Data.Slides.Count > 1)
+        {
+            <div class="cs-slider-dots">
+                @for (var i = 0; i < Data.Slides.Count; i++)
+                {
+                    <button class="cs-slider-dot @(i == 0 ? "cs-slider-dot-active" : "")" onclick="csSliderGo('@uid', @i)" aria-label="Go to slide @(i + 1)"></button>
+                }
+            </div>
+        }
+    </section>
+
+    <script>
+        function csSliderInit(id, interval) {
+            var el = document.getElementById(id);
+            if (!el || el._csSliderReady) return;
+            el._csSliderReady = true;
+            var slides = el.querySelectorAll('.cs-slider-slide');
+            var dots = el.querySelectorAll('.cs-slider-dot');
+            if (slides.length < 2) return;
+            var current = 0;
+            var timer;
+
+            function go(idx) {
+                slides[current].classList.remove('cs-slider-active');
+                if (dots.length) dots[current].classList.remove('cs-slider-dot-active');
+                current = ((idx % slides.length) + slides.length) % slides.length;
+                slides[current].classList.add('cs-slider-active');
+                if (dots.length) dots[current].classList.add('cs-slider-dot-active');
+            }
+
+            window['csSliderNav_' + id] = function(dir) { go(current + dir); resetTimer(); };
+            window['csSliderGo_' + id] = function(idx) { go(idx); resetTimer(); };
+
+            function resetTimer() {
+                clearInterval(timer);
+                if (interval > 0) timer = setInterval(function() { go(current + 1); }, interval);
+            }
+
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) clearInterval(timer);
+                else resetTimer();
+            });
+
+            el.addEventListener('mouseenter', function() { clearInterval(timer); });
+            el.addEventListener('mouseleave', function() { resetTimer(); });
+
+            resetTimer();
+        }
+
+        function csSliderNav(id, dir) { var fn = window['csSliderNav_' + id]; if (fn) fn(dir); }
+        function csSliderGo(id, idx) { var fn = window['csSliderGo_' + id]; if (fn) fn(idx); }
+
+        csSliderInit('@uid', @(Data.IntervalMs));
+        document.addEventListener('enhancedload', function() {
+            var el = document.getElementById('@uid');
+            if (el) { el._csSliderReady = false; csSliderInit('@uid', @(Data.IntervalMs)); }
+        });
+    </script>
+}
+
+<style>
+    .cs-slider {
+        position: relative;
+        width: 100%;
+        overflow: hidden;
+    }
+    .cs-slider-track {
+        position: relative;
+        width: 100%;
+        height: 28rem;
+    }
+    .cs-slider-slide {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 0.7s ease;
+        z-index: 0;
+    }
+    .cs-slider-slide.cs-slider-active {
+        opacity: 1;
+        z-index: 1;
+    }
+    .cs-slider-img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .cs-slider-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.05) 100%);
+    }
+    .cs-slider-content {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 2.5rem;
+        z-index: 2;
+        text-align: center;
+        color: #fff;
+    }
+    .cs-slider-title {
+        font-size: 2.25rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem;
+        text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+    }
+    .cs-slider-subtitle {
+        font-size: 1.125rem;
+        margin: 0 0 1.25rem;
+        opacity: 0.9;
+        text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+    .cs-slider-btn {
+        display: inline-block;
+        padding: 0.65rem 1.75rem;
+        background: #2563eb;
+        color: #fff;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 0.95rem;
+        text-decoration: none;
+        transition: background 0.2s, transform 0.2s;
+    }
+    .cs-slider-btn:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+    }
+    .cs-slider-arrow {
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 3;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.9);
+        border: none;
+        color: #374151;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+        transition: background 0.2s, transform 0.2s;
+        backdrop-filter: blur(4px);
+    }
+    .cs-slider-arrow:hover {
+        background: #fff;
+        transform: translateY(-50%) scale(1.08);
+    }
+    .cs-slider-prev { left: 1rem; }
+    .cs-slider-next { right: 1rem; }
+    .cs-slider-dots {
+        position: absolute;
+        bottom: 1.25rem;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 3;
+        display: flex;
+        gap: 0.5rem;
+    }
+    .cs-slider-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.8);
+        background: transparent;
+        cursor: pointer;
+        transition: background 0.3s, transform 0.2s;
+        padding: 0;
+    }
+    .cs-slider-dot:hover {
+        background: rgba(255,255,255,0.5);
+    }
+    .cs-slider-dot.cs-slider-dot-active {
+        background: #fff;
+        transform: scale(1.2);
+    }
+    @@media (max-width: 640px) {
+        .cs-slider-track { height: 20rem; }
+        .cs-slider-title { font-size: 1.5rem; }
+        .cs-slider-subtitle { font-size: 0.95rem; }
+        .cs-slider-content { padding: 1.5rem; }
+        .cs-slider-arrow { width: 36px; height: 36px; }
+        .cs-slider-prev { left: 0.5rem; }
+        .cs-slider-next { right: 0.5rem; }
+    }
+</style>
+
+@code {
+    [Parameter] public SliderBlockData? Data { get; set; }
+    private string _uid = Guid.NewGuid().ToString("N")[..8];
+}

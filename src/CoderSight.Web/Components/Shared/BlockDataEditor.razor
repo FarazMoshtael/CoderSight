@@ -1,0 +1,501 @@
+@using System.Reflection
+@using System.Text.Json
+@using System.Collections
+@using Microsoft.AspNetCore.Components.Rendering
+@inject BlockRegistry BlockRegistry
+
+@if (customEditorType is not null)
+{
+    <DynamicComponent Type="customEditorType"
+                      Parameters="@(new Dictionary<string, object?> { ["Data"] = Data, ["DataChanged"] = DataChanged })" />
+}
+else if (dataInstance is not null && dataType is not null)
+{
+    <div class="space-y-3">
+        @foreach (var prop in GetEditableProperties(dataType))
+        {
+            @RenderProperty(dataInstance, prop, "")
+        }
+    </div>
+}
+else
+{
+    <p class="text-xs text-gray-400 italic">No editor available for this block type.</p>
+}
+
+<MediaPickerModal @bind-IsVisible="showMediaPicker"
+                  CurrentUrl="@mediaPickerCurrentUrl"
+                  OnSelected="OnMediaSelected" />
+
+@code {
+    [Parameter] public string BlockType { get; set; } = "";
+    [Parameter] public string Data { get; set; } = "{}";
+    [Parameter] public EventCallback<string> DataChanged { get; set; }
+
+    private object? dataInstance;
+    private Type? dataType;
+    private Type? customEditorType;
+
+    private bool showMediaPicker;
+    private string? mediaPickerCurrentUrl;
+    private Action<string>? mediaPickerCallback;
+
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    private static readonly HashSet<string> TextAreaFields = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "Content", "HtmlContent", "Html", "Code", "Bio", "Quote", "Answer",
+        "Description", "Message", "Text"
+    };
+
+    private static readonly HashSet<string> MediaUrlSuffixes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "ImageUrl", "VideoUrl", "ThumbnailUrl", "AvatarUrl", "PhotoUrl",
+        "BackgroundImageUrl", "LogoUrl", "MediaUrl", "IconUrl", "CoverUrl"
+    };
+
+    protected override void OnParametersSet()
+    {
+        var reg = BlockRegistry.Get(BlockType);
+        if (reg is null) return;
+
+        if (reg.EditorComponentType != typeof(object))
+        {
+            customEditorType = reg.EditorComponentType;
+            return;
+        }
+
+        customEditorType = null;
+        dataType = reg.DataType;
+        try
+        {
+            dataInstance = JsonSerializer.Deserialize(Data ?? "{}", dataType, JsonOpts)
+                ?? Activator.CreateInstance(dataType);
+        }
+        catch
+        {
+            dataInstance = Activator.CreateInstance(dataType);
+        }
+    }
+
+    private static bool IsMediaUrlField(string propertyName)
+    {
+        if (MediaUrlSuffixes.Contains(propertyName)) return true;
+        if (propertyName.EndsWith("Url", StringComparison.OrdinalIgnoreCase))
+        {
+            var prefix = propertyName[..^3].ToLowerInvariant();
+            return prefix.Contains("image") || prefix.Contains("photo") || prefix.Contains("avatar")
+                || prefix.Contains("thumbnail") || prefix.Contains("video") || prefix.Contains("media")
+                || prefix.Contains("logo") || prefix.Contains("icon") || prefix.Contains("cover")
+                || prefix.Contains("background") || prefix.Contains("banner") || prefix.Contains("src");
+        }
+        return false;
+    }
+
+    private IEnumerable<PropertyInfo> GetEditableProperties(Type type)
+    {
+        return type.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.CanRead && p.CanWrite && p.Name != "GetDisplayName"
+                && p.GetMethod?.IsSpecialName == false || p.GetMethod?.Name.StartsWith("get_") == true)
+            .Where(p => p.Name != "GetDisplayName");
+    }
+
+    private void OpenMediaPicker(object instance, PropertyInfo prop)
+    {
+        mediaPickerCurrentUrl = prop.GetValue(instance) as string ?? "";
+        mediaPickerCallback = url =>
+        {
+            prop.SetValue(instance, url);
+            NotifyChanged();
+        };
+        showMediaPicker = true;
+    }
+
+    private async Task OnMediaSelected(string url)
+    {
+        mediaPickerCallback?.Invoke(url);
+        showMediaPicker = false;
+        StateHasChanged();
+    }
+
+    private RenderFragment RenderProperty(object instance, PropertyInfo prop, string prefix) => builder =>
+    {
+        var propType = prop.PropertyType;
+        var underlyingType = Nullable.GetUnderlyingType(propType) ?? propType;
+        var label = FormatLabel(prop.Name);
+        var value = prop.GetValue(instance);
+
+        if (underlyingType == typeof(string))
+        {
+            var strVal = value as string ?? "";
+            var isTextArea = TextAreaFields.Contains(prop.Name);
+            var isMedia = IsMediaUrlField(prop.Name);
+
+            builder.OpenElement(0, "div");
+            builder.OpenElement(1, "label");
+            builder.AddAttribute(2, "class", "block text-xs font-medium text-gray-600 mb-1");
+            builder.AddContent(3, prefix + label);
+            builder.CloseElement();
+
+            if (isMedia)
+            {
+                // Media URL field: input + browse button + thumbnail preview
+                builder.OpenElement(4, "div");
+                builder.AddAttribute(5, "class", "flex gap-2 items-start");
+
+                builder.OpenElement(6, "div");
+                builder.AddAttribute(7, "class", "flex-1");
+
+                builder.OpenElement(8, "div");
+                builder.AddAttribute(9, "class", "flex gap-1");
+
+                builder.OpenElement(10, "input");
+                builder.AddAttribute(11, "type", "text");
+                builder.AddAttribute(12, "class", "flex-1 border border-gray-200 rounded px-3 py-2 text-sm focus:ring-brand-blue focus:border-brand-blue");
+                builder.AddAttribute(13, "value", strVal);
+                builder.AddAttribute(14, "placeholder", "/uploads/...");
+                builder.AddAttribute(15, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e =>
+                {
+                    prop.SetValue(instance, e.Value?.ToString() ?? "");
+                    NotifyChanged();
+                }));
+                builder.CloseElement(); // input
+
+                builder.OpenElement(16, "button");
+                builder.AddAttribute(17, "type", "button");
+                builder.AddAttribute(18, "class", "shrink-0 bg-brand-blue text-white px-3 py-2 rounded text-sm font-medium hover:opacity-90 transition-opacity");
+                builder.AddAttribute(19, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, () => OpenMediaPicker(instance, prop)));
+                builder.AddContent(20, "Browse");
+                builder.CloseElement(); // button
+
+                builder.CloseElement(); // flex gap-1
+
+                // Small thumbnail preview if URL has a value
+                if (!string.IsNullOrEmpty(strVal))
+                {
+                    builder.OpenElement(21, "div");
+                    builder.AddAttribute(22, "class", "mt-2");
+
+                    if (strVal.EndsWith(".svg", StringComparison.OrdinalIgnoreCase)
+                        || strVal.EndsWith(".png", StringComparison.OrdinalIgnoreCase)
+                        || strVal.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase)
+                        || strVal.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase)
+                        || strVal.EndsWith(".gif", StringComparison.OrdinalIgnoreCase)
+                        || strVal.EndsWith(".webp", StringComparison.OrdinalIgnoreCase)
+                        || prop.Name.Contains("Image", StringComparison.OrdinalIgnoreCase)
+                        || prop.Name.Contains("Avatar", StringComparison.OrdinalIgnoreCase)
+                        || prop.Name.Contains("Thumbnail", StringComparison.OrdinalIgnoreCase)
+                        || prop.Name.Contains("Logo", StringComparison.OrdinalIgnoreCase))
+                    {
+                        builder.OpenElement(23, "img");
+                        builder.AddAttribute(24, "src", strVal);
+                        builder.AddAttribute(25, "class", "h-16 w-auto rounded border border-gray-200 object-cover");
+                        builder.AddAttribute(26, "alt", "Preview");
+                        builder.CloseElement();
+                    }
+                    else
+                    {
+                        builder.OpenElement(23, "span");
+                        builder.AddAttribute(24, "class", "text-xs text-gray-400");
+                        builder.AddContent(25, strVal);
+                        builder.CloseElement();
+                    }
+
+                    builder.CloseElement(); // mt-2
+                }
+
+                builder.CloseElement(); // flex-1
+                builder.CloseElement(); // flex gap-2
+            }
+            else if (isTextArea)
+            {
+                builder.OpenElement(4, "textarea");
+                builder.AddAttribute(5, "class", "w-full border border-gray-200 rounded px-3 py-2 text-sm focus:ring-brand-blue focus:border-brand-blue");
+                builder.AddAttribute(6, "rows", 3);
+                builder.AddAttribute(7, "value", strVal);
+                builder.AddAttribute(8, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e =>
+                {
+                    prop.SetValue(instance, e.Value?.ToString() ?? "");
+                    NotifyChanged();
+                }));
+                builder.CloseElement();
+            }
+            else
+            {
+                builder.OpenElement(4, "input");
+                builder.AddAttribute(5, "type", "text");
+                builder.AddAttribute(6, "class", "w-full border border-gray-200 rounded px-3 py-2 text-sm focus:ring-brand-blue focus:border-brand-blue");
+                builder.AddAttribute(7, "value", strVal);
+                builder.AddAttribute(8, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e =>
+                {
+                    prop.SetValue(instance, e.Value?.ToString() ?? "");
+                    NotifyChanged();
+                }));
+                builder.CloseElement();
+            }
+            builder.CloseElement();
+        }
+        else if (underlyingType == typeof(int))
+        {
+            var intVal = value is int i ? i : 0;
+            builder.OpenElement(0, "div");
+            builder.OpenElement(1, "label");
+            builder.AddAttribute(2, "class", "block text-xs font-medium text-gray-600 mb-1");
+            builder.AddContent(3, prefix + label);
+            builder.CloseElement();
+            builder.OpenElement(4, "input");
+            builder.AddAttribute(5, "type", "number");
+            builder.AddAttribute(6, "class", "w-full border border-gray-200 rounded px-3 py-2 text-sm focus:ring-brand-blue focus:border-brand-blue");
+            builder.AddAttribute(7, "value", intVal);
+            builder.AddAttribute(8, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e =>
+            {
+                if (int.TryParse(e.Value?.ToString(), out var parsed))
+                {
+                    prop.SetValue(instance, parsed);
+                    NotifyChanged();
+                }
+            }));
+            builder.CloseElement();
+            builder.CloseElement();
+        }
+        else if (underlyingType == typeof(double))
+        {
+            var dblVal = value is double d ? d : 0.0;
+            builder.OpenElement(0, "div");
+            builder.OpenElement(1, "label");
+            builder.AddAttribute(2, "class", "block text-xs font-medium text-gray-600 mb-1");
+            builder.AddContent(3, prefix + label);
+            builder.CloseElement();
+            builder.OpenElement(4, "input");
+            builder.AddAttribute(5, "type", "number");
+            builder.AddAttribute(6, "step", "0.1");
+            builder.AddAttribute(7, "class", "w-full border border-gray-200 rounded px-3 py-2 text-sm focus:ring-brand-blue focus:border-brand-blue");
+            builder.AddAttribute(8, "value", dblVal);
+            builder.AddAttribute(9, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e =>
+            {
+                if (double.TryParse(e.Value?.ToString(), System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var parsed))
+                {
+                    prop.SetValue(instance, parsed);
+                    NotifyChanged();
+                }
+            }));
+            builder.CloseElement();
+            builder.CloseElement();
+        }
+        else if (underlyingType == typeof(bool))
+        {
+            var boolVal = value is bool b && b;
+            builder.OpenElement(0, "div");
+            builder.AddAttribute(1, "class", "flex items-center space-x-2 py-1");
+            builder.OpenElement(2, "input");
+            builder.AddAttribute(3, "type", "checkbox");
+            builder.AddAttribute(4, "class", "rounded border-gray-300 text-brand-blue");
+            builder.AddAttribute(5, "checked", boolVal);
+            builder.AddAttribute(6, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e =>
+            {
+                prop.SetValue(instance, bool.TryParse(e.Value?.ToString(), out var parsed) && parsed);
+                NotifyChanged();
+            }));
+            builder.CloseElement();
+            builder.OpenElement(7, "label");
+            builder.AddAttribute(8, "class", "text-xs font-medium text-gray-600");
+            builder.AddContent(9, prefix + label);
+            builder.CloseElement();
+            builder.CloseElement();
+        }
+        else if (IsListOfStrings(propType))
+        {
+            RenderStringList(builder, instance, prop, prefix + label);
+        }
+        else if (IsGenericList(propType))
+        {
+            RenderObjectList(builder, instance, prop, prefix + label);
+        }
+    };
+
+    private bool IsListOfStrings(Type type)
+    {
+        return type.IsGenericType
+            && type.GetGenericTypeDefinition() == typeof(List<>)
+            && type.GetGenericArguments()[0] == typeof(string);
+    }
+
+    private bool IsGenericList(Type type)
+    {
+        return type.IsGenericType && type.GetGenericTypeDefinition() == typeof(List<>);
+    }
+
+    private void RenderStringList(RenderTreeBuilder builder, object instance, PropertyInfo prop, string label)
+    {
+        var list = prop.GetValue(instance) as IList<string> ?? new List<string>();
+
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "border border-gray-100 rounded-md p-3 bg-gray-50");
+
+        builder.OpenElement(2, "div");
+        builder.AddAttribute(3, "class", "flex justify-between items-center mb-2");
+        builder.OpenElement(4, "span");
+        builder.AddAttribute(5, "class", "text-xs font-medium text-gray-600");
+        builder.AddContent(6, label);
+        builder.CloseElement();
+        builder.OpenElement(7, "button");
+        builder.AddAttribute(8, "type", "button");
+        builder.AddAttribute(9, "class", "text-xs text-brand-blue hover:text-blue-800");
+        builder.AddAttribute(10, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, () =>
+        {
+            var l = prop.GetValue(instance) as List<string>;
+            if (l is not null)
+            {
+                l.Add("");
+                NotifyChanged();
+            }
+        }));
+        builder.AddContent(11, "+ Add");
+        builder.CloseElement();
+        builder.CloseElement();
+
+        for (int idx = 0; idx < list.Count; idx++)
+        {
+            var capturedIdx = idx;
+            builder.OpenElement(12, "div");
+            builder.AddAttribute(13, "class", "flex space-x-2 mb-1");
+
+            builder.OpenElement(14, "input");
+            builder.AddAttribute(15, "type", "text");
+            builder.AddAttribute(16, "class", "flex-1 border border-gray-200 rounded px-2 py-1 text-sm");
+            builder.AddAttribute(17, "value", list[capturedIdx]);
+            builder.AddAttribute(18, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e =>
+            {
+                var l = prop.GetValue(instance) as List<string>;
+                if (l is not null && capturedIdx < l.Count)
+                {
+                    l[capturedIdx] = e.Value?.ToString() ?? "";
+                    NotifyChanged();
+                }
+            }));
+            builder.CloseElement();
+
+            builder.OpenElement(19, "button");
+            builder.AddAttribute(20, "type", "button");
+            builder.AddAttribute(21, "class", "text-red-400 hover:text-red-600 text-xs px-1");
+            builder.AddAttribute(22, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, () =>
+            {
+                var l = prop.GetValue(instance) as List<string>;
+                if (l is not null && capturedIdx < l.Count)
+                {
+                    l.RemoveAt(capturedIdx);
+                    NotifyChanged();
+                }
+            }));
+            builder.AddContent(23, "x");
+            builder.CloseElement();
+
+            builder.CloseElement();
+        }
+
+        builder.CloseElement();
+    }
+
+    private void RenderObjectList(RenderTreeBuilder builder, object instance, PropertyInfo prop, string label)
+    {
+        var list = prop.GetValue(instance) as IList;
+        var itemType = prop.PropertyType.GetGenericArguments()[0];
+
+        if (list is null)
+        {
+            list = (IList?)Activator.CreateInstance(typeof(List<>).MakeGenericType(itemType));
+            prop.SetValue(instance, list);
+        }
+
+        builder.OpenElement(0, "div");
+        builder.AddAttribute(1, "class", "border border-gray-100 rounded-md p-3 bg-gray-50");
+
+        builder.OpenElement(2, "div");
+        builder.AddAttribute(3, "class", "flex justify-between items-center mb-2");
+        builder.OpenElement(4, "span");
+        builder.AddAttribute(5, "class", "text-xs font-semibold text-gray-700 uppercase tracking-wider");
+        builder.AddContent(6, $"{label} ({list!.Count})");
+        builder.CloseElement();
+        builder.OpenElement(7, "button");
+        builder.AddAttribute(8, "type", "button");
+        builder.AddAttribute(9, "class", "text-xs text-brand-blue hover:text-blue-800");
+        builder.AddAttribute(10, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, () =>
+        {
+            var newItem = Activator.CreateInstance(itemType);
+            if (newItem is not null)
+            {
+                list.Add(newItem);
+                NotifyChanged();
+            }
+        }));
+        builder.AddContent(11, "+ Add");
+        builder.CloseElement();
+        builder.CloseElement();
+
+        for (int idx = 0; idx < list.Count; idx++)
+        {
+            var capturedIdx = idx;
+            var item = list[capturedIdx]!;
+
+            builder.OpenElement(12, "div");
+            builder.AddAttribute(13, "class", "border border-gray-200 rounded bg-white p-3 mb-2");
+
+            builder.OpenElement(14, "div");
+            builder.AddAttribute(15, "class", "flex justify-between items-center mb-2");
+            builder.OpenElement(16, "span");
+            builder.AddAttribute(17, "class", "text-xs text-gray-400");
+            builder.AddContent(18, $"#{capturedIdx + 1}");
+            builder.CloseElement();
+            builder.OpenElement(19, "button");
+            builder.AddAttribute(20, "type", "button");
+            builder.AddAttribute(21, "class", "text-red-400 hover:text-red-600 text-xs");
+            builder.AddAttribute(22, "onclick", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, () =>
+            {
+                if (capturedIdx < list.Count)
+                {
+                    list.RemoveAt(capturedIdx);
+                    NotifyChanged();
+                }
+            }));
+            builder.AddContent(23, "Remove");
+            builder.CloseElement();
+            builder.CloseElement();
+
+            builder.OpenElement(24, "div");
+            builder.AddAttribute(25, "class", "space-y-2");
+            foreach (var subProp in GetEditableProperties(itemType))
+            {
+                builder.AddContent(26, RenderProperty(item, subProp, ""));
+            }
+            builder.CloseElement();
+
+            builder.CloseElement();
+        }
+
+        builder.CloseElement();
+    }
+
+    private async void NotifyChanged()
+    {
+        if (dataInstance is null) return;
+        var json = JsonSerializer.Serialize(dataInstance, dataInstance.GetType(), JsonOpts);
+        await DataChanged.InvokeAsync(json);
+        StateHasChanged();
+    }
+
+    private static string FormatLabel(string propertyName)
+    {
+        var chars = new List<char>();
+        foreach (var c in propertyName)
+        {
+            if (char.IsUpper(c) && chars.Count > 0)
+                chars.Add(' ');
+            chars.Add(chars.Count == 0 ? char.ToUpper(c) : c);
+        }
+        return new string(chars.ToArray());
+    }
+}

@@ -1,0 +1,340 @@
+@using System.Text.Json
+
+<MediaPickerModal @bind-IsVisible="showMediaPicker"
+                  CurrentUrl="@(style?.BackgroundImageUrl ?? "")"
+                  OnSelected="OnBgImagePicked" />
+
+<div class="mt-2">
+    <button type="button" @onclick="TogglePanel"
+            class="flex items-center space-x-1 text-xs text-gray-500 hover:text-indigo-600 transition-colors">
+        <span>@(isOpen ? "▾" : "▸")</span>
+        <span>Style Options</span>
+    </button>
+
+    @if (isOpen && style is not null)
+    {
+        <div class="mt-2 border border-gray-100 rounded-md p-3 bg-gray-50 space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Background Color</label>
+                    <div class="flex space-x-2">
+                        <input type="color" value="@GetColorValue(style.BackgroundColor)"
+                               @onchange="e => SetField(v => style.BackgroundColor = v, e)"
+                               class="h-8 w-10 rounded border border-gray-200 cursor-pointer" />
+                        <input type="text" value="@style.BackgroundColor"
+                               @onchange="e => SetField(v => style.BackgroundColor = v, e)"
+                               class="flex-1 border border-gray-200 rounded px-2 py-1 text-xs font-mono" />
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Text Color</label>
+                    <div class="flex space-x-2">
+                        <input type="color" value="@style.TextColor"
+                               @onchange="e => SetField(v => style.TextColor = v, e)"
+                               class="h-8 w-10 rounded border border-gray-200 cursor-pointer" />
+                        <input type="text" value="@style.TextColor"
+                               @onchange="e => SetField(v => style.TextColor = v, e)"
+                               class="flex-1 border border-gray-200 rounded px-2 py-1 text-xs font-mono" />
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Background Image</label>
+                <div class="flex space-x-2 items-center">
+                    <input type="text" value="@style.BackgroundImageUrl"
+                           @onchange="e => SetField(v => style.BackgroundImageUrl = v, e)"
+                           class="flex-1 border border-gray-200 rounded px-2 py-1 text-xs font-mono" placeholder="/uploads/image.jpg" />
+                    <button type="button" @onclick="OpenBgImagePicker"
+                            class="px-2 py-1 text-xs bg-indigo-50 text-indigo-600 rounded border border-indigo-200 hover:bg-indigo-100">Browse</button>
+                    @if (!string.IsNullOrEmpty(style.BackgroundImageUrl))
+                    {
+                        <button type="button" @onclick="ClearBgImage"
+                                class="px-2 py-1 text-xs text-red-500 hover:text-red-700">Clear</button>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(style.BackgroundImageUrl))
+                {
+                    <div class="mt-1.5 flex gap-2">
+                        <div>
+                            <span class="text-[10px] text-gray-400">Size</span>
+                            <select value="@style.BackgroundSize"
+                                    @onchange="e => SetField(v => style.BackgroundSize = v, e)"
+                                    class="w-full border border-gray-200 rounded px-2 py-1 text-xs">
+                                <option value="cover">Cover</option>
+                                <option value="contain">Contain</option>
+                                <option value="auto">Auto</option>
+                                <option value="100% 100%">Stretch</option>
+                            </select>
+                        </div>
+                        <div>
+                            <span class="text-[10px] text-gray-400">Position</span>
+                            <select value="@style.BackgroundPosition"
+                                    @onchange="e => SetField(v => style.BackgroundPosition = v, e)"
+                                    class="w-full border border-gray-200 rounded px-2 py-1 text-xs">
+                                <option value="center">Center</option>
+                                <option value="top">Top</option>
+                                <option value="bottom">Bottom</option>
+                                <option value="left">Left</option>
+                                <option value="right">Right</option>
+                                <option value="top left">Top Left</option>
+                                <option value="top right">Top Right</option>
+                                <option value="bottom left">Bottom Left</option>
+                                <option value="bottom right">Bottom Right</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-1.5 h-16 rounded border border-gray-200 bg-center bg-no-repeat" style="background-image:url('@style.BackgroundImageUrl');background-size:@style.BackgroundSize;background-position:@style.BackgroundPosition;"></div>
+                }
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Padding</label>
+                <div class="grid grid-cols-4 gap-2">
+                    <div>
+                        <span class="text-[10px] text-gray-400">Top</span>
+                        <input type="text" value="@style.PaddingTop"
+                               @onchange="e => SetField(v => style.PaddingTop = v, e)"
+                               class="w-full border border-gray-200 rounded px-2 py-1 text-xs" />
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-gray-400">Right</span>
+                        <input type="text" value="@style.PaddingRight"
+                               @onchange="e => SetField(v => style.PaddingRight = v, e)"
+                               class="w-full border border-gray-200 rounded px-2 py-1 text-xs" />
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-gray-400">Bottom</span>
+                        <input type="text" value="@style.PaddingBottom"
+                               @onchange="e => SetField(v => style.PaddingBottom = v, e)"
+                               class="w-full border border-gray-200 rounded px-2 py-1 text-xs" />
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-gray-400">Left</span>
+                        <input type="text" value="@style.PaddingLeft"
+                               @onchange="e => SetField(v => style.PaddingLeft = v, e)"
+                               class="w-full border border-gray-200 rounded px-2 py-1 text-xs" />
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Margin</label>
+                <div class="grid grid-cols-2 gap-2">
+                    <div>
+                        <span class="text-[10px] text-gray-400">Top</span>
+                        <input type="text" value="@style.MarginTop"
+                               @onchange="e => SetField(v => style.MarginTop = v, e)"
+                               class="w-full border border-gray-200 rounded px-2 py-1 text-xs" />
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-gray-400">Bottom</span>
+                        <input type="text" value="@style.MarginBottom"
+                               @onchange="e => SetField(v => style.MarginBottom = v, e)"
+                               class="w-full border border-gray-200 rounded px-2 py-1 text-xs" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Border Radius</label>
+                    <input type="text" value="@style.BorderRadius"
+                           @onchange="e => SetField(v => style.BorderRadius = v, e)"
+                           class="w-full border border-gray-200 rounded px-2 py-1 text-xs" placeholder="0.5rem" />
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Max Width</label>
+                    <input type="text" value="@style.MaxWidth"
+                           @onchange="e => SetField(v => style.MaxWidth = v, e)"
+                           class="w-full border border-gray-200 rounded px-2 py-1 text-xs" placeholder="100% or 1200px" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Border Color</label>
+                    <div class="flex space-x-2">
+                        <input type="color" value="@GetColorValue(style.BorderColor)"
+                               @onchange="e => SetField(v => style.BorderColor = v, e)"
+                               class="h-8 w-10 rounded border border-gray-200 cursor-pointer" />
+                        <input type="text" value="@style.BorderColor"
+                               @onchange="e => SetField(v => style.BorderColor = v, e)"
+                               class="flex-1 border border-gray-200 rounded px-2 py-1 text-xs font-mono" />
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Border Width</label>
+                    <input type="text" value="@style.BorderWidth"
+                           @onchange="e => SetField(v => style.BorderWidth = v, e)"
+                           class="w-full border border-gray-200 rounded px-2 py-1 text-xs" placeholder="1px" />
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Text Align</label>
+                <div class="flex gap-1">
+                    @foreach (var align in new[] { ("", "Default"), ("left", "Left"), ("center", "Center"), ("right", "Right"), ("justify", "Justify") })
+                    {
+                        <button type="button"
+                                @onclick="() => SetTextAlign(align.Item1)"
+                                class="flex-1 px-2 py-1.5 text-xs rounded border transition-colors @(style!.TextAlign == align.Item1 ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300")">
+                            @align.Item2
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Font Size</label>
+                <div class="flex gap-1">
+                    @foreach (var size in new[] { ("", "Default"), ("0.875rem", "SM"), ("1rem", "Base"), ("1.125rem", "LG"), ("1.25rem", "XL"), ("1.5rem", "2XL"), ("2rem", "3XL") })
+                    {
+                        <button type="button"
+                                @onclick="() => SetFontSize(size.Item1)"
+                                class="flex-1 px-1 py-1.5 text-xs rounded border transition-colors @(style!.FontSize == size.Item1 ? "bg-indigo-600 text-white border-indigo-600" : "bg-white text-gray-600 border-gray-200 hover:border-indigo-300")">
+                            @size.Item2
+                        </button>
+                    }
+                </div>
+            </div>
+
+            <div>
+                <label class="block text-xs font-medium text-gray-600 mb-1">Custom CSS Class</label>
+                <input type="text" value="@style.CustomCssClass"
+                       @onchange="e => SetField(v => style.CustomCssClass = v, e)"
+                       class="w-full border border-gray-200 rounded px-2 py-1 text-xs font-mono" placeholder="e.g. shadow-lg rounded-xl" />
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <input type="checkbox" checked="@style.FullWidth"
+                       @onchange="e => SetBoolField(v => style.FullWidth = v, e)"
+                       class="rounded border-gray-300 text-indigo-600" />
+                <label class="text-xs font-medium text-gray-600">Full width</label>
+            </div>
+
+            <div class="pt-2 border-t border-gray-200">
+                <span class="text-[10px] text-gray-400 uppercase tracking-wider">Brand Quick Colors</span>
+                <div class="flex space-x-2 mt-1">
+                    @foreach (var swatch in BrandSwatches)
+                    {
+                        <button type="button" @onclick="() => ApplyBgColor(swatch.Color)"
+                                class="w-6 h-6 rounded border border-gray-200" style="background:@swatch.Color"
+                                title="@swatch.Name"></button>
+                    }
+                    <button type="button" @onclick="() => ApplyBgColor(TransparentValue)"
+                            class="w-6 h-6 rounded border border-dashed border-gray-300 text-[8px] text-gray-400 flex items-center justify-center"
+                            title="Transparent">&#8709;</button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string Styles { get; set; } = "{}";
+    [Parameter] public EventCallback<string> StylesChanged { get; set; }
+    private bool showMediaPicker;
+
+    private BlockStyleOptions? style;
+    private bool isOpen;
+
+    private const string TransparentValue = "transparent";
+
+    private static readonly (string Color, string Name)[] BrandSwatches =
+    [
+        ("#2563EB", "Primary Blue"),
+        ("#020817", "Dark Navy"),
+        ("#1A2233", "Secondary Dark"),
+        ("#64748B", "Slate"),
+        ("#FFFFFF", "White")
+    ];
+
+    private static readonly JsonSerializerOptions JsonOpts = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    protected override void OnParametersSet()
+    {
+        try
+        {
+            style = JsonSerializer.Deserialize<BlockStyleOptions>(Styles ?? "{}", JsonOpts) ?? new();
+        }
+        catch
+        {
+            style = new();
+        }
+    }
+
+    private void TogglePanel() => isOpen = !isOpen;
+
+    private static string GetColorValue(string color) =>
+        color == TransparentValue ? "#ffffff" : color;
+
+    private void SetField(Action<string> setter, ChangeEventArgs e)
+    {
+        setter(e.Value?.ToString() ?? "");
+        NotifyChanged();
+    }
+
+    private void SetBoolField(Action<bool> setter, ChangeEventArgs e)
+    {
+        setter(bool.TryParse(e.Value?.ToString(), out var v) && v);
+        NotifyChanged();
+    }
+
+    private void SetTextAlign(string align)
+    {
+        if (style is null) return;
+        style.TextAlign = align;
+        NotifyChanged();
+    }
+
+    private void SetFontSize(string size)
+    {
+        if (style is null) return;
+        style.FontSize = size;
+        NotifyChanged();
+    }
+
+    private void OpenBgImagePicker()
+    {
+        showMediaPicker = true;
+    }
+
+    private void OnBgImagePicked(string url)
+    {
+        if (style is null) return;
+        style.BackgroundImageUrl = url;
+        showMediaPicker = false;
+        NotifyChanged();
+    }
+
+    private void ClearBgImage()
+    {
+        if (style is null) return;
+        style.BackgroundImageUrl = "";
+        NotifyChanged();
+    }
+
+    private void ApplyBgColor(string color)
+    {
+        if (style is null) return;
+        style.BackgroundColor = color;
+        if (color is "#020817" or "#1A2233")
+            style.TextColor = "#FFFFFF";
+        else if (color is "#FFFFFF" or TransparentValue)
+            style.TextColor = "#020817";
+        NotifyChanged();
+    }
+
+    private async void NotifyChanged()
+    {
+        if (style is null) return;
+        var json = JsonSerializer.Serialize(style, JsonOpts);
+        await StylesChanged.InvokeAsync(json);
+        StateHasChanged();
+    }
+}

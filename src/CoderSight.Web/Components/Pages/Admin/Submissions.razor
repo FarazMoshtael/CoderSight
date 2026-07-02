@@ -1,0 +1,244 @@
+@page "/admin/submissions"
+@layout AdminLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Editor")]
+@inject IBlogService BlogService
+@inject IPageService PageService
+@inject INotificationQueue NotificationQueue
+@inject NavigationManager Nav
+@inject UserManager<ApplicationUser> UserManager
+@using Microsoft.AspNetCore.Identity
+@using CoderSight.Data
+@rendermode InteractiveServer
+
+<PageTitle>Submissions — @SiteName Admin</PageTitle>
+
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Blog Submissions</h1>
+        <p class="text-sm text-gray-500 mt-1">@pendingCount pending review</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <select @bind="statusFilter" @bind:after="LoadData" class="border border-gray-300 rounded-md px-3 py-2 text-sm">
+            <option value="pending">Pending Review</option>
+            <option value="all">All Submissions</option>
+        </select>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="mb-4 px-4 py-3 rounded-md text-sm @(isError ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700")">@message</div>
+}
+
+@if (submissions.Any())
+{
+    <div class="space-y-4">
+        @foreach (var sub in submissions)
+        {
+            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <div class="p-5">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center gap-2 mb-1">
+                                <h3 class="font-semibold text-gray-900 truncate">@sub.Page.Title</h3>
+                                <span class="text-xs px-2 py-0.5 rounded-full font-medium @StatusBadge(sub.Page.Status)">
+                                    @StatusLabel(sub.Page.Status)
+                                </span>
+                            </div>
+                            <p class="text-sm text-gray-500 line-clamp-2 mb-2">@sub.Excerpt</p>
+                            <div class="flex items-center gap-4 text-xs text-gray-400">
+                                <span class="flex items-center gap-1">
+                                    <span class="font-medium text-gray-600">@(sub.AuthorName ?? "Unknown")</span>
+                                    @if (!string.IsNullOrEmpty(sub.SubmittedByUserId))
+                                    {
+                                        <span>(@(submitterEmails.GetValueOrDefault(sub.SubmittedByUserId, "")))</span>
+                                    }
+                                </span>
+                                <span>@sub.Page.Culture.ToUpper()</span>
+                                <span>@sub.Page.CreatedAt.ToString("MMM dd, yyyy HH:mm")</span>
+                                <span>~@sub.ReadTimeMinutes min read</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (expandedId == sub.Id)
+                    {
+                        <div class="mt-4 border-t border-gray-100 pt-4">
+                            <div class="prose prose-sm max-w-none bg-gray-50 rounded-lg p-4 max-h-96 overflow-y-auto">
+                                @foreach (var block in sub.Page.Blocks.OrderBy(b => b.SortOrder))
+                                {
+                                    @if (block.BlockType == "RichText")
+                                    {
+                                        try
+                                        {
+                                            var data = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(block.Data);
+                                            if (data.TryGetProperty("Content", out var contentEl))
+                                            {
+                                                @((MarkupString)contentEl.GetString()!)
+                                            }
+                                        }
+                                        catch { }
+                                    }
+                                    else
+                                    {
+                                        <div class="text-xs bg-blue-50 text-brand-blue px-2 py-1 rounded my-2">[@block.BlockType block]</div>
+                                    }
+                                }
+                            </div>
+
+                            @if (sub.Page.Status == CoderSight.Core.Enums.PageStatus.PendingReview)
+                            {
+                                <div class="mt-4 space-y-3">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 mb-1">Admin Notes (optional, visible to author on rejection)</label>
+                                        <textarea @bind="adminNotes" rows="2" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Feedback for the author..."></textarea>
+                                    </div>
+                                    <div class="flex gap-2">
+                                        <button @onclick="() => Approve(sub)" class="px-4 py-2 bg-green-600 text-white rounded-md text-sm font-medium hover:bg-green-700">
+                                            Approve & Publish
+                                        </button>
+                                        <button @onclick="() => Reject(sub)" class="px-4 py-2 bg-red-600 text-white rounded-md text-sm font-medium hover:bg-red-700">
+                                            Reject
+                                        </button>
+                                        <a href="/admin/blog/edit/@sub.Id" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-50">
+                                            Edit in Full Editor
+                                        </a>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+                <div class="bg-gray-50 border-t border-gray-100 px-5 py-2 flex justify-between items-center">
+                    <button @onclick="() => ToggleExpand(sub.Id)" class="text-xs text-brand-blue hover:underline font-medium">
+                        @(expandedId == sub.Id ? "Collapse" : "Preview Content")
+                    </button>
+                    @if (sub.Page.Status != CoderSight.Core.Enums.PageStatus.PendingReview)
+                    {
+                        <div class="flex gap-2">
+                            @if (sub.Page.Status == CoderSight.Core.Enums.PageStatus.Rejected)
+                            {
+                                <button @onclick="() => Approve(sub)" class="text-xs text-green-600 hover:text-green-800 font-medium">Approve</button>
+                            }
+                            <button @onclick="() => Delete(sub)" class="text-xs text-red-500 hover:text-red-700">Delete</button>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="bg-white rounded-lg border border-gray-200 p-8 text-center text-gray-400">
+        @(statusFilter == "pending" ? "No pending submissions." : "No submissions found.")
+    </div>
+}
+
+@code {
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    private List<CoderSight.Core.Entities.BlogPost> submissions = [];
+    private Dictionary<string, string> submitterEmails = [];
+    private int pendingCount;
+    private string statusFilter = "pending";
+    private Guid? expandedId;
+    private string adminNotes = "";
+    private string? message;
+    private bool isError;
+
+    protected override async Task OnInitializedAsync() => await LoadData();
+
+    private async Task LoadData()
+    {
+        var all = await BlogService.GetPendingSubmissionsAsync();
+
+        // Also load non-pending user submissions if "all" filter
+        if (statusFilter == "all")
+        {
+            var (enPosts, _) = await BlogService.GetPostsAsync("en", pageSize: 1000, publishedOnly: false);
+            var (faPosts, _) = await BlogService.GetPostsAsync("fa", pageSize: 1000, publishedOnly: false);
+            submissions = enPosts.Concat(faPosts)
+                .Where(p => p.SubmittedByUserId != null)
+                .OrderByDescending(p => p.Page.CreatedAt)
+                .ToList();
+        }
+        else
+        {
+            submissions = all;
+        }
+
+        pendingCount = all.Count;
+
+        // Load submitter emails
+        var userIds = submissions.Where(s => s.SubmittedByUserId != null).Select(s => s.SubmittedByUserId!).Distinct();
+        submitterEmails = [];
+        foreach (var uid in userIds)
+        {
+            var user = await UserManager.FindByIdAsync(uid);
+            if (user?.Email != null)
+                submitterEmails[uid] = user.Email;
+        }
+    }
+
+    private void ToggleExpand(Guid id)
+    {
+        expandedId = expandedId == id ? null : id;
+        adminNotes = "";
+    }
+
+    private async Task Approve(CoderSight.Core.Entities.BlogPost sub)
+    {
+        await PageService.PublishAsync(sub.Page.Id);
+        sub.AdminNotes = string.IsNullOrWhiteSpace(adminNotes) ? null : adminNotes.Trim();
+        await BlogService.UpdateAsync(sub);
+
+        var siteUrl = Nav.BaseUri.TrimEnd('/');
+        NotificationQueue.EnqueuePostNotification(new CoderSight.Core.Services.PostNotification(sub.Id, sub.PageId, siteUrl));
+
+        message = $"'{sub.Page.Title}' has been approved and published. Subscribers will be notified.";
+        isError = false;
+        expandedId = null;
+        adminNotes = "";
+        await LoadData();
+    }
+
+    private async Task Reject(CoderSight.Core.Entities.BlogPost sub)
+    {
+        sub.Page.Status = CoderSight.Core.Enums.PageStatus.Rejected;
+        sub.AdminNotes = string.IsNullOrWhiteSpace(adminNotes) ? null : adminNotes.Trim();
+        await PageService.UpdateAsync(sub.Page);
+        await BlogService.UpdateAsync(sub);
+
+        message = $"'{sub.Page.Title}' has been rejected.";
+        isError = false;
+        expandedId = null;
+        adminNotes = "";
+        await LoadData();
+    }
+
+    private async Task Delete(CoderSight.Core.Entities.BlogPost sub)
+    {
+        await BlogService.DeleteAsync(sub.Id);
+        message = $"Submission deleted.";
+        isError = false;
+        await LoadData();
+    }
+
+    private static string StatusBadge(CoderSight.Core.Enums.PageStatus status) => status switch
+    {
+        CoderSight.Core.Enums.PageStatus.PendingReview => "bg-amber-100 text-amber-800",
+        CoderSight.Core.Enums.PageStatus.Published => "bg-green-100 text-green-800",
+        CoderSight.Core.Enums.PageStatus.Rejected => "bg-red-100 text-red-800",
+        _ => "bg-gray-100 text-gray-600"
+    };
+
+    private static string StatusLabel(CoderSight.Core.Enums.PageStatus status) => status switch
+    {
+        CoderSight.Core.Enums.PageStatus.PendingReview => "Pending",
+        CoderSight.Core.Enums.PageStatus.Published => "Published",
+        CoderSight.Core.Enums.PageStatus.Rejected => "Rejected",
+        _ => status.ToString()
+    };
+}

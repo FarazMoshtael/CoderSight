@@ -1,0 +1,46 @@
+@using CoderSight.Core.Blocks
+@using CoderSight.Core.Blocks.Data
+@using System.Text.Json
+@inject BlockRegistry Registry
+
+@if (Data?.Columns is not null)
+{
+    var blockId = $"cols-{Math.Abs(GetHashCode())}";
+    <section class="py-12 px-4">
+        <style>
+            @@media (min-width: 768px) {
+                @foreach (var (col, idx) in Data.Columns.Select((c, i) => (c, i)))
+                {
+                    if (!string.IsNullOrEmpty(col.Width))
+                    {
+                        @($"#{blockId} .col-{idx} {{ flex: 0 0 {col.Width}; }}")
+                    }
+                    else
+                    {
+                        @($"#{blockId} .col-{idx} {{ flex: 1; }}")
+                    }
+                }
+            }
+        </style>
+        <div id="@blockId" class="max-w-6xl mx-auto flex flex-col md:flex-row gap-6" style="gap: @(Data.Gap ?? "1.5rem");">
+            @foreach (var (col, idx) in Data.Columns.Select((c, i) => (c, i)))
+            {
+                <div class="w-full col-@idx">
+                    @foreach (var nested in col.Blocks)
+                    {
+                        var reg = Registry.Get(nested.BlockType);
+                        if (reg is not null && reg.ComponentType != typeof(object))
+                        {
+                            <DynamicComponent Type="reg.ComponentType"
+                                              Parameters="Registry.DeserializeAsParameters(nested.BlockType, nested.Data)" />
+                        }
+                    }
+                </div>
+            }
+        </div>
+    </section>
+}
+
+@code {
+    [Parameter] public ColumnsBlockData? Data { get; set; }
+}

@@ -1,0 +1,23 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-12 px-4">
+    <div class="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-@(Data?.Columns ?? 3) gap-4">
+        @if (Data?.Images is not null)
+        {
+            @foreach (var image in Data.Images)
+            {
+                <div class="overflow-hidden rounded-lg">
+                    <img src="@image.ImageUrl" alt="@image.AltText" class="w-full h-48 object-cover hover:scale-105 transition-transform duration-300" />
+                    @if (!string.IsNullOrEmpty(image.Caption))
+                    {
+                        <p class="text-sm text-gray-500 mt-2 px-1">@image.Caption</p>
+                    }
+                </div>
+            }
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public ImageGalleryBlockData? Data { get; set; }
+}

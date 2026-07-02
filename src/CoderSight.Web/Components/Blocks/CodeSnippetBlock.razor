@@ -1,0 +1,17 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-8 px-4">
+    <div class="max-w-3xl mx-auto">
+        @if (!string.IsNullOrEmpty(Data?.FileName))
+        {
+            <div class="bg-gray-800 text-gray-400 px-4 py-2 rounded-t-lg text-xs font-mono">@Data.FileName</div>
+        }
+        <pre class="bg-gray-900 text-gray-100 p-4 rounded-@(string.IsNullOrEmpty(Data?.FileName) ? "lg" : "b-lg") overflow-x-auto text-sm font-mono">
+            <code>@Data?.Code</code>
+        </pre>
+    </div>
+</section>
+
+@code {
+    [Parameter] public CodeSnippetBlockData? Data { get; set; }
+}

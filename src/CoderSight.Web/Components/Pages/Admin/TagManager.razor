@@ -1,0 +1,154 @@
+@page "/admin/tags"
+@layout AdminLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Editor")]
+@inject IBlogService BlogService
+@rendermode InteractiveServer
+
+<PageTitle>Tags — @SiteName Admin</PageTitle>
+
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Tags</h1>
+        <p class="text-sm text-gray-500 mt-1">Manage blog tags</p>
+    </div>
+</div>
+
+<div class="flex space-x-2 mb-4">
+    <button class="px-3 py-1 text-sm rounded-md @(filterCulture == "en" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600")"
+            @onclick='() => SetFilter("en")'>English</button>
+    <button class="px-3 py-1 text-sm rounded-md @(filterCulture == "fa" ? "bg-indigo-100 text-indigo-700" : "bg-gray-100 text-gray-600")"
+            @onclick='() => SetFilter("fa")'>فارسی</button>
+</div>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="mb-4 px-4 py-3 rounded-md text-sm @(isError ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700")">
+        @message
+    </div>
+}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2">
+        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Slug</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    @foreach (var tag in tags)
+                    {
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">@tag.Name</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">@tag.Slug</td>
+                            <td class="px-6 py-4 text-right text-sm space-x-2">
+                                <button @onclick="() => EditTag(tag)" class="text-indigo-600 hover:text-indigo-900">Edit</button>
+                                <button @onclick="() => DeleteTag(tag.Id)" class="text-red-600 hover:text-red-900">Delete</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div>
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">
+                @(isEditing ? "Edit Tag" : "Add Tag")
+            </h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                    <input type="text" @bind="editTag.Name" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                    <input type="text" @bind="editTag.Slug" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                </div>
+                <div class="flex space-x-2">
+                    <button @onclick="SaveTag" class="px-4 py-2 bg-indigo-600 text-white rounded-md text-sm hover:bg-indigo-700">
+                        @(isEditing ? "Update" : "Create")
+                    </button>
+                    @if (isEditing)
+                    {
+                        <button @onclick="CancelEdit" class="px-4 py-2 border border-gray-300 rounded-md text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    private List<Tag> tags = [];
+    private Tag editTag = new();
+    private string filterCulture = "en";
+    private bool isEditing;
+    private string? message;
+    private bool isError;
+
+    protected override async Task OnInitializedAsync() => await LoadTags();
+
+    private async Task LoadTags()
+    {
+        tags = await BlogService.GetTagsAsync(filterCulture);
+    }
+
+    private async Task SetFilter(string culture)
+    {
+        filterCulture = culture;
+        editTag = new() { Culture = culture };
+        isEditing = false;
+        await LoadTags();
+    }
+
+    private void EditTag(Tag tag)
+    {
+        editTag = new()
+        {
+            Id = tag.Id, Name = tag.Name, Slug = tag.Slug,
+            Culture = tag.Culture, LocalizationGroupId = tag.LocalizationGroupId
+        };
+        isEditing = true;
+    }
+
+    private void CancelEdit()
+    {
+        editTag = new() { Culture = filterCulture };
+        isEditing = false;
+    }
+
+    private async Task SaveTag()
+    {
+        try
+        {
+            editTag.Culture = filterCulture;
+            if (isEditing)
+                await BlogService.UpdateTagAsync(editTag);
+            else
+                await BlogService.CreateTagAsync(editTag);
+
+            editTag = new() { Culture = filterCulture };
+            isEditing = false;
+            await LoadTags();
+            message = "Tag saved.";
+            isError = false;
+        }
+        catch (Exception ex) { message = ex.Message; isError = true; }
+    }
+
+    private async Task DeleteTag(Guid id)
+    {
+        await BlogService.DeleteTagAsync(id);
+        await LoadTags();
+        message = "Tag deleted.";
+        isError = false;
+    }
+}

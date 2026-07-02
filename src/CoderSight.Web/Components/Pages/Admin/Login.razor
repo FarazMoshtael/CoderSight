@@ -1,0 +1,55 @@
+@page "/admin/login"
+
+<PageTitle>Login — @SiteName Admin</PageTitle>
+
+<div class="min-h-screen flex items-center justify-center bg-gray-100">
+    <div class="bg-white rounded-lg border border-gray-200 p-8 w-full max-w-md">
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold text-gray-900">CoderSight</h1>
+            <p class="text-sm text-gray-500 mt-2">Sign in to the admin panel</p>
+        </div>
+
+        @if (HasError)
+        {
+            <div class="mb-4 px-4 py-3 rounded-md text-sm bg-red-50 text-red-700">
+                Invalid email or password.
+            </div>
+        }
+
+        <form method="post" action="/api/auth/login" data-enhance="false">
+
+            <div style="position:absolute;left:-9999px;" aria-hidden="true"><textarea name="cs_hp" tabindex="-1" autocomplete="off" rows="1"></textarea></div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" name="email" required
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500"
+                           placeholder="you@codersight.com" />
+                </div>
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="block text-sm font-medium text-gray-700">Password</label>
+                        <a href="/forgot-password" class="text-xs text-indigo-600 hover:underline">Forgot password?</a>
+                    </div>
+                    <input type="password" name="password" required
+                           class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors">
+                    Sign In
+                </button>
+            </div>
+        </form>
+
+
+    </div>
+</div>
+
+@code {
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? ErrorParam { get; set; }
+
+    private bool HasError => ErrorParam == "1";
+}

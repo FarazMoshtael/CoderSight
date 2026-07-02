@@ -1,0 +1,72 @@
+@page "/Error"
+@using System.Diagnostics
+@layout EmptyLayout
+
+<PageTitle>Something went wrong — @SiteName</PageTitle>
+
+<div class="min-h-screen bg-brand-navy flex flex-col items-center justify-center px-4 text-white font-sora">
+
+    <!-- Logo mark -->
+    <div class="mb-10">
+        <img src="/uploads/logo-icon.svg" alt="CoderSight" class="h-16 w-auto opacity-90" />
+    </div>
+
+    <!-- Error code -->
+    <div class="relative mb-6">
+        <span class="text-[8rem] leading-none font-bold text-brand-blue opacity-10 select-none">500</span>
+        <div class="absolute inset-0 flex items-center justify-center">
+            <svg class="w-16 h-16 text-brand-blue" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+        </div>
+    </div>
+
+    <!-- Heading -->
+    <h1 class="text-2xl sm:text-3xl font-semibold text-white mb-3 text-center">
+        Something went wrong
+    </h1>
+    <p class="text-brand-slate text-center max-w-md mb-8 text-sm sm:text-base leading-relaxed">
+        An unexpected error occurred on our server. Our team has been notified and we're working to fix it.
+    </p>
+
+    @if (ShowRequestId)
+    {
+        <div class="mb-8 bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-center">
+            <span class="text-xs text-brand-slate">Request ID: </span>
+            <code class="text-xs text-brand-blue font-mono">@RequestId</code>
+        </div>
+    }
+
+    <!-- Actions -->
+    <div class="flex flex-col sm:flex-row gap-4">
+        <a href="/" class="inline-flex items-center justify-center gap-2 bg-brand-blue text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            Go Home
+        </a>
+        <button onclick="history.back()" class="inline-flex items-center justify-center gap-2 border border-white/20 text-white px-6 py-3 rounded-lg font-medium hover:bg-white/5 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Go Back
+        </button>
+    </div>
+
+    <p class="mt-12 text-xs text-white/20">CoderSight &mdash; Seeing Beyond the Code.</p>
+</div>
+
+@code {
+    [CascadingParameter]
+    private HttpContext? HttpContext { get; set; }
+
+    private string? RequestId { get; set; }
+    private bool ShowRequestId => !string.IsNullOrEmpty(RequestId);
+
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    protected override void OnInitialized() =>
+        RequestId = Activity.Current?.Id ?? HttpContext?.TraceIdentifier;
+}

@@ -1,0 +1,44 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-16 px-4">
+    <div class="max-w-3xl mx-auto">
+        @if (!string.IsNullOrEmpty(Data?.SectionTitle))
+        {
+            <h2 class="text-3xl font-bold text-center text-brand-navy mb-12">@Data.SectionTitle</h2>
+        }
+        <div class="space-y-4">
+            @if (Data?.Items is not null)
+            {
+                @foreach (var item in Data.Items)
+                {
+                    <div class="border border-gray-200 rounded-lg overflow-hidden">
+                        <button class="w-full flex justify-between items-center px-6 py-4 text-start hover:bg-gray-50 transition-colors"
+                                onclick="this.parentElement.classList.toggle('cs-faq-open')">
+                            <span class="font-medium text-brand-navy">@item.Question</span>
+                            <span class="cs-faq-icon text-gray-400 text-xl transition-transform">+</span>
+                        </button>
+                        <div class="cs-faq-answer px-6 pb-4 text-brand-slate">
+                            @item.Answer
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</section>
+
+<style>
+    .cs-faq-answer {
+        display: none;
+    }
+    .cs-faq-open .cs-faq-answer {
+        display: block;
+    }
+    .cs-faq-open .cs-faq-icon {
+        transform: rotate(45deg);
+    }
+</style>
+
+@code {
+    [Parameter] public FaqBlockData? Data { get; set; }
+}

@@ -1,0 +1,111 @@
+@page "/admin/media"
+@layout AdminLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Editor")]
+@inject IMediaService MediaService
+@rendermode InteractiveServer
+
+<PageTitle>Media Library — @SiteName Admin</PageTitle>
+
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Media Library</h1>
+        <p class="text-sm text-gray-500 mt-1">Upload and manage media files</p>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="mb-4 px-4 py-3 rounded-md text-sm @(isError ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700")">
+        @message
+    </div>
+}
+
+<div class="bg-white rounded-lg border border-gray-200 p-6 mb-6">
+    <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Upload</h2>
+    <div class="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
+        <InputFile OnChange="HandleFileUpload" class="block mx-auto text-sm text-gray-500" accept="image/*,video/*,.pdf,.svg" />
+        <p class="text-xs text-gray-400 mt-2">Images, videos, PDFs, SVGs</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+    @foreach (var item in mediaItems)
+    {
+        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden group relative">
+            @if (item.ContentType.StartsWith("image/"))
+            {
+                <img src="@($"{item.Url}?v={cacheBust}")" alt="@item.AltText" class="w-full h-32 object-cover" />
+            }
+            else
+            {
+                <div class="w-full h-32 bg-gray-100 flex items-center justify-center text-gray-400 text-2xl">📄</div>
+            }
+            <div class="p-2">
+                <p class="text-xs text-gray-700 truncate" title="@item.FileName">@item.FileName</p>
+                <p class="text-xs text-gray-400">@FormatSize(item.SizeBytes)</p>
+            </div>
+            <div class="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onclick="csCopyUrl('@item.Url', this)" class="bg-white/90 text-gray-600 hover:text-gray-900 rounded px-2 py-1 text-xs shadow-sm">Copy URL</button>
+            </div>
+            <div class="absolute bottom-10 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button @onclick="() => DeleteMedia(item.Id)" class="bg-red-500/90 text-white rounded px-2 py-1 text-xs shadow-sm hover:bg-red-600">✕</button>
+            </div>
+        </div>
+    }
+</div>
+
+@if (!mediaItems.Any())
+{
+    <div class="text-center py-12 text-gray-500">
+        <p>No media files yet. Upload your first file above.</p>
+    </div>
+}
+
+@code {
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    private List<Media> mediaItems = [];
+    private string? message;
+    private bool isError;
+    private long cacheBust = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+
+    protected override async Task OnInitializedAsync()
+    {
+        mediaItems = await MediaService.GetAllAsync(pageSize: 100);
+    }
+
+    private async Task HandleFileUpload(InputFileChangeEventArgs e)
+    {
+        try
+        {
+            var file = e.File;
+            using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024);
+            await MediaService.UploadAsync(stream, file.Name, file.ContentType);
+            mediaItems = await MediaService.GetAllAsync(pageSize: 100);
+            cacheBust = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            message = $"Uploaded {file.Name}";
+            isError = false;
+        }
+        catch (Exception ex)
+        {
+            message = $"Upload failed: {ex.Message}";
+            isError = true;
+        }
+    }
+
+    private async Task DeleteMedia(Guid id)
+    {
+        await MediaService.DeleteAsync(id);
+        mediaItems = await MediaService.GetAllAsync(pageSize: 100);
+        message = "File deleted.";
+        isError = false;
+    }
+
+    private static string FormatSize(long bytes) => bytes switch
+    {
+        < 1024 => $"{bytes} B",
+        < 1024 * 1024 => $"{bytes / 1024.0:F1} KB",
+        _ => $"{bytes / (1024.0 * 1024.0):F1} MB"
+    };
+}

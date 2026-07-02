@@ -1,0 +1,478 @@
+@page "/admin/blog/edit/{PostId:guid}"
+@page "/admin/blog/new"
+@layout AdminLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Editor")]
+@inject IBlogService BlogService
+@inject IPageService PageService
+@inject BlockRegistry BlockRegistry
+@inject NavigationManager Nav
+@inject INotificationQueue NotificationQueue
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthStateProvider
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Identity
+@using CoderSight.Data
+@rendermode InteractiveServer
+
+<PageTitle>@(IsNew ? "New Blog Post" : $"Edit: {post.Page.Title}") — @SiteName Admin</PageTitle>
+
+<div class="flex justify-between items-center mb-6">
+    <div class="flex items-center space-x-3">
+        <a href="/admin/blog" class="text-gray-400 hover:text-gray-600">←</a>
+        <h1 class="text-xl font-bold text-gray-900">@(IsNew ? "New Blog Post" : "Edit Blog Post")</h1>
+    </div>
+    <div class="flex space-x-2">
+        @if (!IsNew && post.Page.Status != CoderSight.Core.Enums.PageStatus.Published)
+        {
+            <button @onclick="Publish" class="px-4 py-2 bg-green-600 text-white rounded-md text-sm hover:bg-green-700">Publish</button>
+        }
+        <button @onclick="Save" class="px-4 py-2 bg-brand-blue text-white rounded-md text-sm hover:opacity-90">Save</button>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="mb-4 px-4 py-3 rounded-md text-sm @(isError ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700")">
+        @message
+    </div>
+}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 space-y-6">
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Post Details</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                    <input type="text" @bind="post.Page.Title" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Slug</label>
+                        <input type="text" @bind="post.Page.Slug" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Culture</label>
+                        <select @bind="post.Page.Culture" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                            <option value="en">English</option>
+                            <option value="fa">فارسی</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Excerpt</label>
+                    <textarea @bind="post.Excerpt" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Featured Image</label>
+                    <div class="flex gap-2">
+                        <input type="text" @bind="post.FeaturedImageUrl" class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="/uploads/..." />
+                        <button type="button" @onclick='() => OpenPicker("featured")' class="shrink-0 bg-brand-blue text-white px-3 py-2 rounded-md text-sm font-medium hover:opacity-90">
+                            Browse
+                        </button>
+                    </div>
+                    @if (!string.IsNullOrEmpty(post.FeaturedImageUrl))
+                    {
+                        <img src="@post.FeaturedImageUrl" alt="Featured" class="mt-2 h-20 w-auto rounded border border-gray-200 object-cover" />
+                    }
+                </div>
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="isFeatured" @bind="post.IsFeatured" class="rounded border-gray-300 text-brand-blue" />
+                    <label for="isFeatured" class="text-sm text-gray-700">Featured post</label>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider">Content Blocks</h2>
+                <span class="text-xs text-gray-400">@post.Page.Blocks.Count block(s)</span>
+            </div>
+            <div class="space-y-3">
+                @foreach (var block in post.Page.Blocks.OrderBy(b => b.SortOrder))
+                {
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs px-2 py-1 rounded bg-blue-50 text-brand-blue font-medium">@block.BlockType</span>
+                            <div class="flex space-x-1">
+                                <button @onclick="() => MoveBlockUp(block)" class="text-gray-400 hover:text-gray-600 text-sm px-1" disabled="@(block.SortOrder == 0)">↑</button>
+                                <button @onclick="() => MoveBlockDown(block)" class="text-gray-400 hover:text-gray-600 text-sm px-1">↓</button>
+                                <button @onclick="() => RemoveBlock(block)" class="text-red-400 hover:text-red-600 text-sm px-1">x</button>
+                            </div>
+                        </div>
+                        <BlockDataEditor
+                            BlockType="@block.BlockType"
+                            Data="@block.Data"
+                            DataChanged="@(json => { block.Data = json; })" />
+                        <BlockStyleEditor
+                            Styles="@block.Styles"
+                            StylesChanged="@(json => { block.Styles = json; })" />
+                    </div>
+                }
+            </div>
+            <div class="mt-4">
+                <button @onclick="ToggleBlockPicker" class="w-full border-2 border-dashed border-gray-300 rounded-lg px-4 py-3 text-sm text-gray-500 hover:border-brand-blue hover:text-brand-blue transition-colors">
+                    + Add Block
+                </button>
+            </div>
+            @if (showBlockPicker)
+            {
+                <div class="mt-4 bg-gray-50 rounded-lg p-4">
+                    <h3 class="text-sm font-medium text-gray-700 mb-3">Choose a block type</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-2">
+                        @foreach (var category in BlockRegistry.GetCategories())
+                        {
+                            <div class="col-span-full text-xs font-medium text-gray-500 uppercase tracking-wider mt-2 first:mt-0">@category</div>
+                            @foreach (var blockReg in BlockRegistry.GetByCategory(category))
+                            {
+                                <button @onclick="() => AddBlock(blockReg.Name)"
+                                        class="text-left px-3 py-2 bg-white border border-gray-200 rounded-md hover:border-brand-blue hover:bg-blue-50 transition-colors text-sm">
+                                    @blockReg.Name
+                                </button>
+                            }
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="space-y-6">
+        <!-- Categories -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Categories</h2>
+            @foreach (var cat in categories)
+            {
+                <label class="flex items-center space-x-2 py-1">
+                    <input type="checkbox" checked="@IsInCategory(cat.Id)" @onchange="() => ToggleCategory(cat)" class="rounded border-gray-300 text-brand-blue" />
+                    <span class="text-sm text-gray-700">@cat.Name</span>
+                </label>
+            }
+            @if (!categories.Any())
+            {
+                <p class="text-xs text-gray-400 italic">No categories yet. <a href="/admin/categories" class="text-brand-blue hover:underline">Create one</a></p>
+            }
+        </div>
+
+        <!-- Tags -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Tags</h2>
+            @foreach (var tag in tags)
+            {
+                <label class="flex items-center space-x-2 py-1">
+                    <input type="checkbox" checked="@IsTagged(tag.Id)" @onchange="() => ToggleTag(tag)" class="rounded border-gray-300 text-brand-blue" />
+                    <span class="text-sm text-gray-700">@tag.Name</span>
+                </label>
+            }
+            @if (!tags.Any())
+            {
+                <p class="text-xs text-gray-400 italic">No tags yet. <a href="/admin/tags" class="text-brand-blue hover:underline">Create one</a></p>
+            }
+        </div>
+
+        <!-- Related Posts -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Related Posts</h2>
+            @if (relatedPosts.Any())
+            {
+                <div class="space-y-2 mb-3">
+                    @foreach (var rp in relatedPosts)
+                    {
+                        <div class="flex items-center justify-between bg-gray-50 rounded px-3 py-2">
+                            <span class="text-sm text-gray-700 truncate flex-1">@rp.Page.Title</span>
+                            <button type="button" @onclick="() => RemoveRelatedPost(rp.Id)" class="text-red-400 hover:text-red-600 text-xs ml-2">x</button>
+                        </div>
+                    }
+                </div>
+            }
+            <div>
+                <select @onchange="AddRelatedPost" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                    <option value="">+ Add related post...</option>
+                    @foreach (var ap in availablePosts.Where(p => p.Id != post.Id && !relatedPostIds.Contains(p.Id)))
+                    {
+                        <option value="@ap.Id">@ap.Page.Title</option>
+                    }
+                </select>
+            </div>
+        </div>
+
+        <!-- Meta -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Meta</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Meta Title</label>
+                    <input type="text" @bind="post.Page.MetaTitle" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Custom browser tab title (optional)" />
+                    <p class="text-xs text-gray-400 mt-1">Defaults to post title if empty.</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Meta Description</label>
+                    <textarea @bind="post.Page.MetaDescription" rows="3" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"></textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<MediaPickerModal @bind-IsVisible="showMediaPicker"
+                  CurrentUrl="@pickerCurrentUrl"
+                  OnSelected="OnMediaPicked" />
+
+@code {
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    [Parameter] public Guid? PostId { get; set; }
+
+    private BlogPost post = new() { Page = new() };
+    private List<Category> categories = [];
+    private List<Tag> tags = [];
+    private List<BlogPost> availablePosts = [];
+    private List<BlogPost> relatedPosts = [];
+    private HashSet<Guid> relatedPostIds = [];
+    private bool showBlockPicker;
+    private string? message;
+    private bool isError;
+
+    private bool showMediaPicker;
+    private string? pickerCurrentUrl;
+    private string? pickerTarget;
+
+    private bool IsNew => PostId is null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var culture = "en";
+
+        if (PostId.HasValue)
+        {
+            var found = await BlogService.GetByIdAsync(PostId.Value);
+            if (found is not null)
+            {
+                post = found;
+                culture = post.Page.Culture;
+            }
+        }
+        categories = await BlogService.GetCategoriesAsync(culture);
+        tags = await BlogService.GetTagsAsync(culture);
+
+        // Load all posts for the related posts selector (include drafts)
+        var (enPosts, _) = await BlogService.GetPostsAsync("en", pageSize: 1000, publishedOnly: false);
+        var (faPosts, _) = await BlogService.GetPostsAsync("fa", pageSize: 1000, publishedOnly: false);
+        availablePosts = enPosts.Concat(faPosts).ToList();
+
+        // Parse related post IDs
+        LoadRelatedPosts();
+    }
+
+    private void LoadRelatedPosts()
+    {
+        try
+        {
+            var ids = System.Text.Json.JsonSerializer.Deserialize<List<Guid>>(post.RelatedPostIds ?? "[]") ?? [];
+            relatedPostIds = ids.ToHashSet();
+            relatedPosts = availablePosts.Where(p => relatedPostIds.Contains(p.Id)).ToList();
+        }
+        catch
+        {
+            relatedPostIds = [];
+            relatedPosts = [];
+        }
+    }
+
+    private void SyncRelatedPostIds()
+    {
+        post.RelatedPostIds = System.Text.Json.JsonSerializer.Serialize(relatedPostIds.ToList());
+    }
+
+    private void AddRelatedPost(ChangeEventArgs e)
+    {
+        if (Guid.TryParse(e.Value?.ToString(), out var id))
+        {
+            var rp = availablePosts.FirstOrDefault(p => p.Id == id);
+            if (rp is not null && relatedPostIds.Add(id))
+            {
+                relatedPosts.Add(rp);
+                SyncRelatedPostIds();
+            }
+        }
+    }
+
+    private void RemoveRelatedPost(Guid id)
+    {
+        relatedPostIds.Remove(id);
+        relatedPosts.RemoveAll(p => p.Id == id);
+        SyncRelatedPostIds();
+    }
+
+    private bool IsInCategory(Guid categoryId) =>
+        post.BlogPostCategories.Any(bc => bc.CategoryId == categoryId);
+
+    private bool IsTagged(Guid tagId) =>
+        post.BlogPostTags.Any(bt => bt.TagId == tagId);
+
+    private void ToggleCategory(Category cat)
+    {
+        var existing = post.BlogPostCategories.FirstOrDefault(bc => bc.CategoryId == cat.Id);
+        if (existing is not null)
+            post.BlogPostCategories.Remove(existing);
+        else
+            post.BlogPostCategories.Add(new BlogPostCategory { BlogPostId = post.Id, CategoryId = cat.Id, Category = cat });
+    }
+
+    private void ToggleTag(Tag tag)
+    {
+        var existing = post.BlogPostTags.FirstOrDefault(bt => bt.TagId == tag.Id);
+        if (existing is not null)
+            post.BlogPostTags.Remove(existing);
+        else
+            post.BlogPostTags.Add(new BlogPostTag { BlogPostId = post.Id, TagId = tag.Id, Tag = tag });
+    }
+
+    private void OpenPicker(string target)
+    {
+        pickerTarget = target;
+        pickerCurrentUrl = target == "featured" ? post.FeaturedImageUrl : null;
+        showMediaPicker = true;
+    }
+
+    private async Task OnMediaPicked(string url)
+    {
+        if (pickerTarget == "featured")
+            post.FeaturedImageUrl = url;
+        showMediaPicker = false;
+    }
+
+    private async Task ApplyAuthorFromProfile()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = await UserManager.GetUserAsync(authState.User);
+        if (user is not null)
+        {
+            post.AuthorId = user.Id;
+            post.AuthorName = user.DisplayName;
+            post.AuthorAvatarUrl = user.AvatarUrl;
+            post.AuthorBio = user.Bio;
+            post.AuthorLinkedIn = user.LinkedIn;
+            post.AuthorTwitter = user.Twitter;
+            post.AuthorWebsite = user.Website;
+        }
+    }
+
+    private async Task Save()
+    {
+        try
+        {
+            await ApplyAuthorFromProfile();
+            CalculateReadTime();
+
+            if (IsNew)
+            {
+                post.Page.LocalizationGroupId = Guid.NewGuid();
+                var created = await BlogService.CreateAsync(post);
+                Nav.NavigateTo($"/admin/blog/edit/{created.Id}");
+            }
+            else
+            {
+                await BlogService.UpdateAsync(post);
+            }
+            message = "Post saved successfully.";
+            isError = false;
+        }
+        catch (Exception ex)
+        {
+            message = $"Error: {ex.Message}";
+            isError = true;
+        }
+    }
+
+    private async Task Publish()
+    {
+        if (post.Page.Id != Guid.Empty)
+        {
+            await PageService.PublishAsync(post.Page.Id);
+            post.Page.Status = CoderSight.Core.Enums.PageStatus.Published;
+            isError = false;
+
+            var siteUrl = Nav.BaseUri.TrimEnd('/');
+            NotificationQueue.EnqueuePostNotification(new PostNotification(post.Id, post.PageId, siteUrl));
+            message = "Post published! Subscribers will be notified shortly.";
+        }
+    }
+
+    private void ToggleBlockPicker() => showBlockPicker = !showBlockPicker;
+
+    private void AddBlock(string blockType)
+    {
+        post.Page.Blocks.Add(new PageBlock
+        {
+            Id = Guid.NewGuid(),
+            BlockType = blockType,
+            SortOrder = post.Page.Blocks.Count,
+            Data = "{}"
+        });
+        showBlockPicker = false;
+    }
+
+    private void RemoveBlock(PageBlock block)
+    {
+        post.Page.Blocks.Remove(block);
+        var sorted = post.Page.Blocks.OrderBy(b => b.SortOrder).ToList();
+        for (int i = 0; i < sorted.Count; i++) sorted[i].SortOrder = i;
+    }
+
+    private void MoveBlockUp(PageBlock block)
+    {
+        var sorted = post.Page.Blocks.OrderBy(b => b.SortOrder).ToList();
+        var index = sorted.IndexOf(block);
+        if (index > 0)
+            (sorted[index].SortOrder, sorted[index - 1].SortOrder) = (sorted[index - 1].SortOrder, sorted[index].SortOrder);
+    }
+
+    private void MoveBlockDown(PageBlock block)
+    {
+        var sorted = post.Page.Blocks.OrderBy(b => b.SortOrder).ToList();
+        var index = sorted.IndexOf(block);
+        if (index < sorted.Count - 1)
+            (sorted[index].SortOrder, sorted[index + 1].SortOrder) = (sorted[index + 1].SortOrder, sorted[index].SortOrder);
+    }
+
+    private void CalculateReadTime()
+    {
+        var allText = string.Join(" ", post.Page.Blocks
+            .Where(b => !string.IsNullOrEmpty(b.Data))
+            .Select(b =>
+            {
+                try
+                {
+                    using var doc = System.Text.Json.JsonDocument.Parse(b.Data);
+                    var sb = new System.Text.StringBuilder();
+                    ExtractText(doc.RootElement, sb);
+                    return sb.ToString();
+                }
+                catch { return ""; }
+            }));
+
+        var plainText = System.Text.RegularExpressions.Regex.Replace(allText, "<[^>]+>", " ");
+        var wordCount = plainText.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
+        post.ReadTimeMinutes = Math.Max(1, (int)Math.Ceiling(wordCount / 200.0));
+    }
+
+    private static void ExtractText(System.Text.Json.JsonElement element, System.Text.StringBuilder sb)
+    {
+        switch (element.ValueKind)
+        {
+            case System.Text.Json.JsonValueKind.String:
+                sb.Append(' ').Append(element.GetString());
+                break;
+            case System.Text.Json.JsonValueKind.Object:
+                foreach (var prop in element.EnumerateObject())
+                    ExtractText(prop.Value, sb);
+                break;
+            case System.Text.Json.JsonValueKind.Array:
+                foreach (var item in element.EnumerateArray())
+                    ExtractText(item, sb);
+                break;
+        }
+    }
+}

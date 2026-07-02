@@ -1,0 +1,14 @@
+@using CoderSight.Core.Blocks.Data
+
+@if (Data?.ShowDivider == true)
+{
+    <hr class="border-gray-200 my-8 max-w-4xl mx-auto" />
+}
+else
+{
+    <div style="height: @(Data?.Height ?? 40)px;"></div>
+}
+
+@code {
+    [Parameter] public SpacerBlockData? Data { get; set; }
+}

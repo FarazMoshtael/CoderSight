@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" rx="14" fill="#020817"/>
+  <g transform="translate(8, 12)">
+    <!-- Upper eyelid (C curve) -->
+    <path d="M4 20 C4 4, 24 -6, 38 4 C42 6, 40 10, 36 8 C26 2, 12 6, 10 20" fill="#2563EB"/>
+    <!-- Lower eyelid (S curve) -->
+    <path d="M10 20 C12 34, 26 38, 36 32 C40 30, 42 34, 38 36 C24 46, 4 36, 4 20" fill="#2563EB"/>
+    <!-- Wave tail top -->
+    <path d="M38 4 C46 0, 48 8, 44 12 C42 8, 40 6, 38 8" fill="#2563EB"/>
+    <!-- Wave tail bottom -->
+    <path d="M38 36 C46 40, 48 32, 44 28 C42 32, 40 34, 38 32" fill="#2563EB"/>
+    <!-- Iris -->
+    <circle cx="24" cy="20" r="9" fill="#2563EB"/>
+    <!-- Pupil -->
+    <circle cx="24" cy="20" r="4.5" fill="white"/>
+    <circle cx="22.5" cy="18.5" r="1.5" fill="#2563EB" opacity="0.5"/>
+  </g>
+</svg>

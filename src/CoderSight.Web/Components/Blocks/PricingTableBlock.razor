@@ -1,0 +1,45 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-16 px-4 bg-gray-50">
+    <div class="max-w-6xl mx-auto">
+        @if (!string.IsNullOrEmpty(Data?.SectionTitle))
+        {
+            <h2 class="text-3xl font-bold text-center text-gray-900 mb-12">@Data.SectionTitle</h2>
+        }
+        <div class="grid grid-cols-1 md:grid-cols-@(Math.Min(Data?.Plans?.Count ?? 3, 4)) gap-8">
+            @if (Data?.Plans is not null)
+            {
+                @foreach (var plan in Data.Plans)
+                {
+                    <div class="bg-white rounded-xl p-8 @(plan.IsHighlighted ? "ring-2 ring-indigo-600 shadow-lg" : "border border-gray-200")">
+                        @if (plan.IsHighlighted)
+                        {
+                            <span class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-medium">Most Popular</span>
+                        }
+                        <h3 class="text-xl font-bold text-gray-900 mt-4">@plan.Name</h3>
+                        <p class="text-sm text-gray-500 mt-1">@plan.Description</p>
+                        <div class="mt-4 mb-6">
+                            <span class="text-4xl font-bold text-gray-900">@plan.Price</span>
+                            <span class="text-gray-500">@plan.Period</span>
+                        </div>
+                        <ul class="space-y-3 mb-8">
+                            @foreach (var feature in plan.Features)
+                            {
+                                <li class="flex items-center text-sm text-gray-600">
+                                    <span class="text-green-500 me-2">✓</span> @feature
+                                </li>
+                            }
+                        </ul>
+                        <a href="@plan.ButtonLink" class="block text-center py-2.5 rounded-lg font-medium @(plan.IsHighlighted ? "bg-indigo-600 text-white hover:bg-indigo-700" : "border border-gray-300 text-gray-700 hover:bg-gray-50") transition-colors">
+                            @plan.ButtonText
+                        </a>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public PricingTableBlockData? Data { get; set; }
+}

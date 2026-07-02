@@ -1,0 +1,36 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-16 px-4 bg-white">
+    <div class="max-w-6xl mx-auto">
+        @if (!string.IsNullOrEmpty(Data?.SectionTitle))
+        {
+            <h2 class="text-3xl font-bold text-center text-brand-navy mb-4">@Data.SectionTitle</h2>
+            <p class="text-center text-brand-slate mb-12">Trusted by developers worldwide</p>
+        }
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            @if (Data?.Reviews is not null)
+            {
+                @foreach (var review in Data.Reviews)
+                {
+                    <div class="bg-white rounded-xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="flex mb-3">
+                            @for (int i = 0; i < review.Rating; i++) { <span class="text-brand-blue">★</span> }
+                            @for (int i = review.Rating; i < 5; i++) { <span class="text-gray-200">★</span> }
+                        </div>
+                        <p class="text-brand-slate text-sm mb-4 leading-relaxed">@review.Text</p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-8 h-8 rounded-full bg-brand-navy text-white flex items-center justify-center text-xs font-semibold">
+                                @(review.ReviewerName?.Length > 0 ? review.ReviewerName[..1] : "?")
+                            </div>
+                            <span class="font-medium text-sm text-brand-navy">@review.ReviewerName</span>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public ReviewsBlockData? Data { get; set; }
+}

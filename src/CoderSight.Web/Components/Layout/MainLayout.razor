@@ -1,0 +1,93 @@
+@inherits LayoutComponentBase
+@inject ISiteSettingsService SettingsService
+@inject INavMenuService NavMenuService
+
+<div class="min-h-screen flex flex-col" style="background-color: @(settings?.SiteBackgroundColor ?? "#F9FAFB");">
+    <NavMenu />
+
+    <main class="flex-1">
+        @Body
+    </main>
+
+    <footer data-enhance-nav="false" style="background-color: @(settings?.FooterBackgroundColor ?? "#111827"); color: @(settings?.FooterTextColor ?? "#9CA3AF");">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <a href="/@culture/" class="inline-flex items-center gap-2 mb-4">
+                        <img src="@(settings?.LogoUrl ?? "/uploads/logo-icon.svg")" alt="@(settings?.SiteName ?? "CoderSight")" class="w-auto h-7 opacity-80" />
+                        <span class="font-bold text-lg" style="color: @(settings?.FooterHeadingColor ?? "#FFFFFF");">
+                            @(settings?.SiteName ?? "CoderSight")
+                        </span>
+                    </a>
+                    <p class="text-sm">@(settings?.DefaultMetaDescription ?? (IsRtl ? "پلتفرم بینش‌های توسعه‌دهندگان" : "Your go-to platform for developer insights."))</p>
+                </div>
+                <div>
+                    <h4 class="font-medium mb-4" style="color: @(settings?.FooterHeadingColor ?? "#FFFFFF");">
+                        @(IsRtl ? "لینک‌های سریع" : "Quick Links")
+                    </h4>
+                    <ul class="space-y-2 text-sm">
+                        @foreach (var item in footerLinks)
+                        {
+                            var label = IsRtl && !string.IsNullOrEmpty(item.LabelFa) ? item.LabelFa : item.Label;
+                            <li>
+                                <a href="@item.Url" class="transition-colors cs-footer-link"
+                                   target="@(item.OpenInNewTab ? "_blank" : null)"
+                                   rel="@(item.OpenInNewTab ? "noopener noreferrer" : null)">@label</a>
+                            </li>
+                        }
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-medium mb-4" style="color: @(settings?.FooterHeadingColor ?? "#FFFFFF");">
+                        @(IsRtl ? "ارتباط با ما" : "Connect")
+                    </h4>
+                    <ul class="space-y-2 text-sm">
+                        @foreach (var link in SocialLinks)
+                        {
+                            <li><a href="@link.Url" target="_blank" rel="noopener noreferrer" class="transition-colors cs-footer-link">@link.Name</a></li>
+                        }
+                    </ul>
+                </div>
+            </div>
+            <div class="mt-8 pt-8 text-center text-sm" style="border-top: 1px solid @(settings?.FooterBorderColor ?? "#1F2937");">
+                <p>@(settings?.FooterText ?? $"© {DateTime.UtcNow.Year} CoderSight. {(IsRtl ? "تمامی حقوق محفوظ است." : "All rights reserved.")}")</p>
+            </div>
+        </div>
+    </footer>
+</div>
+
+<style>
+    .cs-footer-link:hover {
+        color: @(settings?.FooterLinkHoverColor ?? "#FFFFFF") !important;
+    }
+</style>
+
+<div id="blazor-error-ui" data-nosnippet>
+    An unhandled error has occurred.
+    <a href="." class="reload">Reload</a>
+    <span class="dismiss">🗙</span>
+</div>
+
+@code {
+    private SiteSettings? settings;
+    private List<NavMenuItem> footerLinks = [];
+    private string culture => CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+    private bool IsRtl => CultureInfo.CurrentCulture.TextInfo.IsRightToLeft;
+
+    private List<(string Name, string Url)> SocialLinks => new[]
+    {
+        ("GitHub", settings?.SocialGitHub),
+        ("Twitter", settings?.SocialTwitter),
+        ("LinkedIn", settings?.SocialLinkedIn),
+        ("Instagram", settings?.SocialInstagram),
+        ("YouTube", settings?.SocialYouTube),
+        ("Telegram", settings?.SocialTelegram),
+    }.Where(x => !string.IsNullOrEmpty(x.Item2)).Select(x => (x.Item1, x.Item2!)).ToList();
+
+    protected override async Task OnInitializedAsync()
+    {
+        settings = await SettingsService.GetAsync();
+        var menuTree = await NavMenuService.GetMenuTreeAsync();
+        footerLinks = menuTree.Where(m => m.IsVisible).ToList();
+    }
+}

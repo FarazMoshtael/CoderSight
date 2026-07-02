@@ -1,0 +1,24 @@
+@using CoderSight.Core.Blocks.Data
+
+@{
+    var hasDarkBg = !string.IsNullOrEmpty(Data?.BackgroundColor) && Data.BackgroundColor != "#f9fafb";
+    var labelClass = hasDarkBg ? "text-brand-slate" : "text-gray-600";
+}
+<section class="py-16 px-4" style="background-color: @(Data?.BackgroundColor ?? "#f9fafb");">
+    <div class="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+        @if (Data?.Stats is not null)
+        {
+            @foreach (var stat in Data.Stats)
+            {
+                <div class="text-center p-4">
+                    <p class="text-2xl sm:text-3xl md:text-4xl font-bold text-brand-blue break-words">@stat.Value</p>
+                    <p class="text-sm sm:text-base @labelClass mt-1">@stat.Label</p>
+                </div>
+            }
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public StatsBlockData? Data { get; set; }
+}

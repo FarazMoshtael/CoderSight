@@ -1,0 +1,34 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-16 px-4">
+    <div class="max-w-3xl mx-auto">
+        @if (!string.IsNullOrEmpty(Data?.SectionTitle))
+        {
+            <h2 class="text-3xl font-bold text-center text-brand-navy mb-12">@Data.SectionTitle</h2>
+        }
+        <div class="relative">
+            <div class="absolute start-4 top-0 bottom-0 w-0.5 bg-gray-200"></div>
+            <div class="space-y-8">
+                @if (Data?.Events is not null)
+                {
+                    @foreach (var evt in Data.Events)
+                    {
+                        <div class="relative ps-12">
+                            <div class="absolute start-2 w-5 h-5 bg-brand-blue rounded-full border-4 border-white"></div>
+                            <span class="text-sm text-brand-blue font-medium">@evt.Date</span>
+                            <h3 class="text-lg font-semibold text-brand-navy mt-1">@evt.Title</h3>
+                            @if (!string.IsNullOrEmpty(evt.Description))
+                            {
+                                <p class="text-brand-slate mt-1">@evt.Description</p>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public TimelineBlockData? Data { get; set; }
+}

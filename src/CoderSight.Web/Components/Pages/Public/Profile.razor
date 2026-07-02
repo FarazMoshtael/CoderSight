@@ -1,0 +1,206 @@
+@page "/profile"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject UserManager<ApplicationUser> UserManager
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IMediaService MediaService
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Identity
+@using CoderSight.Data
+@rendermode InteractiveServer
+
+<PageTitle>My Profile — @SiteName</PageTitle>
+
+<div class="max-w-xl mx-auto py-10 px-4">
+    <div class="mb-8">
+        <h1 class="text-2xl font-bold text-brand-navy">My Profile</h1>
+        <p class="text-brand-slate text-sm mt-1">This information is used as author details when you submit blog posts.</p>
+    </div>
+
+    @if (!string.IsNullOrEmpty(message))
+    {
+        <div class="mb-4 px-4 py-3 rounded-md text-sm @(isError ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700")">@message</div>
+    }
+
+    @if (loaded && user is null)
+    {
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
+            <p class="text-gray-400">Could not load your profile. Please <a href="/login?returnUrl=/profile" class="text-brand-blue hover:underline">sign in</a> again.</p>
+        </div>
+    }
+    else if (user is not null)
+    {
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 space-y-5">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Display Name</label>
+                <input type="text" @bind="displayName" maxlength="100" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" value="@user.Email" disabled class="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm bg-gray-50 text-gray-500" />
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-2">Avatar</label>
+                <div class="flex items-center gap-4">
+                    @if (!string.IsNullOrEmpty(avatarUrl))
+                    {
+                        <img src="@avatarUrl" alt="Avatar" class="h-16 w-16 rounded-full border-2 border-gray-200 object-cover" />
+                    }
+                    else
+                    {
+                        <div class="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center text-xl font-bold text-gray-500">
+                            @(string.IsNullOrEmpty(displayName) ? "?" : displayName[..1].ToUpper())
+                        </div>
+                    }
+                    <div class="flex-1">
+                        <label class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors">
+                            <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            @(uploading ? "Uploading..." : "Upload Photo")
+                            <InputFile OnChange="OnAvatarSelected" accept="image/*" class="hidden" disabled="@uploading" />
+                        </label>
+                        @if (!string.IsNullOrEmpty(avatarUrl))
+                        {
+                            <button type="button" @onclick="RemoveAvatar" class="ml-2 text-xs text-red-500 hover:text-red-700">Remove</button>
+                        }
+                        <p class="text-xs text-gray-400 mt-1">JPG, PNG or WebP. Max 2 MB.</p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Bio</label>
+                <textarea @bind="bio" rows="3" maxlength="500" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" placeholder="A short bio about yourself..."></textarea>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">LinkedIn</label>
+                    <input type="url" @bind="linkedIn" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" placeholder="https://linkedin.com/in/..." />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Twitter / X</label>
+                    <input type="url" @bind="twitter" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" placeholder="https://x.com/..." />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Website</label>
+                    <input type="url" @bind="website" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" placeholder="https://..." />
+                </div>
+            </div>
+            <div class="pt-2">
+                <button @onclick="Save" disabled="@saving" class="px-6 py-2.5 bg-brand-blue text-white rounded-lg text-sm font-semibold hover:opacity-90 disabled:opacity-50">
+                    @(saving ? "Saving..." : "Save Profile")
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    private ApplicationUser? user;
+    private bool loaded;
+    private bool uploading;
+    private string displayName = "";
+    private string? avatarUrl;
+    private string? bio;
+    private string? linkedIn;
+    private string? twitter;
+    private string? website;
+    private string? message;
+    private bool isError;
+    private bool saving;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        user = await UserManager.GetUserAsync(authState.User);
+        loaded = true;
+        if (user is null) return;
+
+        displayName = user.DisplayName;
+        avatarUrl = user.AvatarUrl;
+        bio = user.Bio;
+        linkedIn = user.LinkedIn;
+        twitter = user.Twitter;
+        website = user.Website;
+    }
+
+    private async Task OnAvatarSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file.Size > 2 * 1024 * 1024)
+        {
+            message = "File is too large. Maximum size is 2 MB.";
+            isError = true;
+            return;
+        }
+
+        var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp", "image/gif" };
+        if (!allowedTypes.Contains(file.ContentType))
+        {
+            message = "Only JPG, PNG, WebP, and GIF files are allowed.";
+            isError = true;
+            return;
+        }
+
+        uploading = true;
+        message = null;
+
+        try
+        {
+            using var stream = file.OpenReadStream(2 * 1024 * 1024);
+            var media = await MediaService.UploadAsync(stream, file.Name, file.ContentType);
+            avatarUrl = media.Url;
+            message = "Avatar uploaded.";
+            isError = false;
+        }
+        catch (Exception ex)
+        {
+            message = $"Upload failed: {ex.Message}";
+            isError = true;
+        }
+        finally
+        {
+            uploading = false;
+        }
+    }
+
+    private void RemoveAvatar()
+    {
+        avatarUrl = null;
+    }
+
+    private async Task Save()
+    {
+        if (user is null) return;
+        if (string.IsNullOrWhiteSpace(displayName))
+        {
+            message = "Display name is required.";
+            isError = true;
+            return;
+        }
+
+        saving = true;
+        user.DisplayName = displayName.Trim();
+        user.AvatarUrl = avatarUrl?.Trim();
+        user.Bio = bio?.Trim();
+        user.LinkedIn = linkedIn?.Trim();
+        user.Twitter = twitter?.Trim();
+        user.Website = website?.Trim();
+
+        var result = await UserManager.UpdateAsync(user);
+        if (result.Succeeded)
+        {
+            message = "Profile updated.";
+            isError = false;
+        }
+        else
+        {
+            message = string.Join(", ", result.Errors.Select(e => e.Description));
+            isError = true;
+        }
+        saving = false;
+    }
+}

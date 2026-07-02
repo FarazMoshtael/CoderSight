@@ -1,0 +1,28 @@
+@page "/unsubscribe"
+
+<PageTitle>Unsubscribe — @SiteName</PageTitle>
+
+<div class="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+    <div class="max-w-md w-full bg-white rounded-xl shadow-sm p-8 text-center">
+        @if (Status == "success")
+        {
+            <div class="text-green-600 text-4xl mb-4">✓</div>
+            <h1 class="text-xl font-bold text-gray-900 mb-2">Unsubscribed</h1>
+            <p class="text-gray-500 text-sm">You've been successfully unsubscribed from our newsletter. You won't receive any more emails from us.</p>
+        }
+        else
+        {
+            <div class="text-red-500 text-4xl mb-4">✗</div>
+            <h1 class="text-xl font-bold text-gray-900 mb-2">Invalid Link</h1>
+            <p class="text-gray-500 text-sm">This unsubscribe link is invalid or has already been used.</p>
+        }
+        <a href="/" class="inline-block mt-6 text-sm text-brand-blue hover:underline">← Back to home</a>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    [SupplyParameterFromQuery] public string? Status { get; set; }
+}

@@ -1,0 +1,29 @@
+@using CoderSight.Core.Blocks.Data
+
+@{
+    var heroBg = Data?.BackgroundColor ?? "#020817";
+    var heroStyle = $"background: linear-gradient(135deg, {heroBg}, #1A2233);";
+}
+<section class="relative py-24 px-4 text-center text-white" style="@heroStyle">
+    @if (!string.IsNullOrEmpty(Data?.BackgroundImageUrl))
+    {
+        <div class="absolute inset-0 bg-cover bg-center opacity-30" style="background-image: url('@Data.BackgroundImageUrl');"></div>
+    }
+    <div class="relative max-w-4xl mx-auto">
+        <h1 class="text-4xl md:text-5xl font-bold mb-4">@Data?.Title</h1>
+        @if (!string.IsNullOrEmpty(Data?.Subtitle))
+        {
+            <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">@Data.Subtitle</p>
+        }
+        @if (!string.IsNullOrEmpty(Data?.ButtonText))
+        {
+            <a href="@Data?.ButtonLink" class="inline-block bg-brand-blue text-white px-6 sm:px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-colors">
+                @Data.ButtonText
+            </a>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public HeroBlockData? Data { get; set; }
+}

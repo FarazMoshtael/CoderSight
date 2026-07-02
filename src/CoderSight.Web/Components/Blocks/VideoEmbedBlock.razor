@@ -1,0 +1,19 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-12 px-4">
+    <div class="max-w-4xl mx-auto">
+        <div class="aspect-video rounded-lg overflow-hidden bg-gray-900">
+            <iframe src="@Data?.VideoUrl" class="w-full h-full" frameborder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen></iframe>
+        </div>
+        @if (!string.IsNullOrEmpty(Data?.Caption))
+        {
+            <p class="text-sm text-gray-500 text-center mt-3">@Data.Caption</p>
+        }
+    </div>
+</section>
+
+@code {
+    [Parameter] public VideoEmbedBlockData? Data { get; set; }
+}

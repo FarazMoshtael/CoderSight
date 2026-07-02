@@ -1,0 +1,39 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-16 px-4 bg-white">
+    <div class="max-w-3xl mx-auto text-center">
+        @if (Data?.Rating > 0)
+        {
+            <div class="flex justify-center mb-4">
+                @for (int i = 0; i < Data.Rating; i++)
+                {
+                    <span class="text-yellow-400 text-xl">★</span>
+                }
+            </div>
+        }
+        <blockquote class="text-xl text-gray-700 italic mb-6">"@Data?.Quote"</blockquote>
+        <div class="flex items-center justify-center gap-3">
+            @if (!string.IsNullOrEmpty(Data?.AuthorImageUrl))
+            {
+                <img src="@Data.AuthorImageUrl" alt="@Data?.AuthorName" class="w-12 h-12 rounded-full" />
+            }
+            else
+            {
+                <div class="w-12 h-12 rounded-full bg-indigo-100 text-indigo-600 flex items-center justify-center font-semibold">
+                    @(Data?.AuthorName?.Length > 0 ? Data.AuthorName[..1] : "?")
+                </div>
+            }
+            <div class="text-start">
+                <p class="font-semibold text-gray-900">@Data?.AuthorName</p>
+                @if (!string.IsNullOrEmpty(Data?.AuthorTitle))
+                {
+                    <p class="text-sm text-gray-500">@Data.AuthorTitle</p>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+@code {
+    [Parameter] public TestimonialBlockData? Data { get; set; }
+}

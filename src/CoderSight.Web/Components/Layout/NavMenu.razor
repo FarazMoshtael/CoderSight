@@ -1,0 +1,250 @@
+@inject NavigationManager Nav
+@inject ISiteSettingsService SettingsService
+@inject INavMenuService NavMenuService
+
+<nav class="sticky top-0 z-50" data-enhance-nav="false" style="background-color: @(settings?.NavBackgroundColor ?? "#FFFFFF"); border-bottom: 1px solid @(settings?.NavBorderColor ?? "#E5E7EB");">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center" style="height: @(settings?.NavHeight ?? "4rem");">
+            <div class="flex items-center gap-8">
+                <a href="@(isMultilingual ? $"/{culture}/" : "/")" class="flex items-center gap-2">
+                    <img src="@(settings?.LogoUrl ?? "/uploads/logo-icon.svg")" alt="@(settings?.SiteName ?? "CoderSight")" class="w-auto" style="height: @(settings?.NavLogoHeight ?? "2rem");" />
+                    <span class="font-bold hidden sm:inline" style="color: @(settings?.NavLogoTextColor ?? "#020817"); font-size: @(settings?.NavLogoFontSize ?? "1.25rem");">
+                        @(settings?.SiteName ?? "CoderSight")
+                    </span>
+                </a>
+                <div class="hidden md:flex gap-1">
+                    @foreach (var item in menuItems)
+                    {
+                        @if (item.Children.Any())
+                        {
+                            <div class="cs-dropdown relative">
+                                <a href="@ResolveUrl(item)" class="cs-nav-link text-sm font-medium px-3 py-2 rounded-md transition-colors flex items-center gap-1"
+                                   style="color: @(settings?.NavTextColor ?? "#374151");"
+                                   target="@(item.OpenInNewTab ? "_blank" : null)">
+                                    @GetLabel(item)
+                                    <svg class="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                                    </svg>
+                                </a>
+                                <div class="cs-dropdown-menu absolute top-full start-0 pt-1 hidden min-w-48 z-50">
+                                    <div class="rounded-lg shadow-lg border py-1" style="background-color: @(settings?.NavBackgroundColor ?? "#FFFFFF"); border-color: @(settings?.NavBorderColor ?? "#E5E7EB");">
+                                        @foreach (var child in item.Children)
+                                        {
+                                            <a href="@ResolveUrl(child)" class="cs-nav-link block px-4 py-2 text-sm transition-colors"
+                                               style="color: @(settings?.NavTextColor ?? "#374151");"
+                                               target="@(child.OpenInNewTab ? "_blank" : null)">
+                                                @GetLabel(child)
+                                            </a>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <a href="@ResolveUrl(item)" class="cs-nav-link text-sm font-medium px-3 py-2 rounded-md transition-colors"
+                               style="color: @(settings?.NavTextColor ?? "#374151");"
+                               target="@(item.OpenInNewTab ? "_blank" : null)">
+                                @GetLabel(item)
+                            </a>
+                        }
+                    }
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3">
+                @if (isMultilingual)
+                {
+                    <a href="@GetLanguageSwitchUrl()" class="text-sm transition-colors rounded-md px-3 py-1"
+                       style="color: @(settings?.NavTextColor ?? "#374151"); border: 1px solid @(settings?.NavBorderColor ?? "#E5E7EB");">
+                        @(IsRtl ? "EN" : "فا")
+                    </a>
+                }
+                <AuthorizeView>
+                    <Authorized Context="authCtx">
+                        @if (settings?.EnableUserBlogSubmissions ?? false)
+                        {
+                            <a href="/submit-post" class="hidden md:inline text-sm font-medium transition-colors cs-nav-link" style="color: @(settings?.NavTextColor ?? "#374151");">
+                                Write
+                            </a>
+                            <a href="/my-posts" class="hidden md:inline text-sm font-medium transition-colors cs-nav-link" style="color: @(settings?.NavTextColor ?? "#374151");">
+                                My Posts
+                            </a>
+                        }
+                        <AuthorizeView Roles="Admin,Editor">
+                            <Authorized Context="adminCtx">
+                                <a href="/admin" class="hidden md:inline text-sm text-white px-4 py-2 rounded-md hover:opacity-90 transition-colors"
+                                   style="background-color: @(settings?.NavHoverColor ?? "#2563EB");">
+                                    Admin
+                                </a>
+                            </Authorized>
+                        </AuthorizeView>
+                        <a href="/profile" class="hidden md:inline text-sm font-medium transition-colors cs-nav-link" style="color: @(settings?.NavTextColor ?? "#374151");">
+                            @GetDisplayName(authCtx)
+                        </a>
+                        <a href="/api/auth/logout?returnUrl=@(isMultilingual ? $"/{culture}/" : "/")" class="hidden md:inline text-sm transition-colors" style="color: #64748B;">
+                            Logout
+                        </a>
+                    </Authorized>
+                    <NotAuthorized>
+                        @if (settings?.EnableUserRegistration ?? true)
+                        {
+                            <a href="/login" class="text-sm font-medium transition-colors" style="color: @(settings?.NavTextColor ?? "#374151");">
+                                Sign In
+                            </a>
+                            <a href="/register" class="hidden sm:inline text-sm text-white px-4 py-2 rounded-md hover:opacity-90 transition-colors"
+                               style="background-color: @(settings?.NavHoverColor ?? "#2563EB");">
+                                Sign Up
+                            </a>
+                        }
+                    </NotAuthorized>
+                </AuthorizeView>
+                <button onclick="csToggleMenu()" class="md:hidden p-2" style="color: @(settings?.NavTextColor ?? "#374151");" aria-label="Toggle menu">
+                    <svg id="cs-icon-hamburger" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                    <svg id="cs-icon-close" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile menu -->
+    <div id="cs-mobile-menu" class="hidden md:hidden" style="border-top: 1px solid @(settings?.NavBorderColor ?? "#E5E7EB"); background-color: @(settings?.NavBackgroundColor ?? "#FFFFFF");">
+        <div class="px-4 py-3 space-y-1">
+            @foreach (var item in menuItems)
+            {
+                <a href="@ResolveUrl(item)" class="block py-2 px-2 rounded text-sm font-medium cs-nav-link"
+                   style="color: @(settings?.NavTextColor ?? "#374151");"
+                   target="@(item.OpenInNewTab ? "_blank" : null)">
+                    @GetLabel(item)
+                </a>
+                @if (item.Children.Any())
+                {
+                    @foreach (var child in item.Children)
+                    {
+                        <a href="@ResolveUrl(child)" class="block py-2 px-2 rounded text-sm cs-nav-link"
+                           style="color: @(settings?.NavTextColor ?? "#374151"); padding-inline-start: 1.5rem;"
+                           target="@(child.OpenInNewTab ? "_blank" : null)">
+                            @GetLabel(child)
+                        </a>
+                    }
+                }
+            }
+
+            <AuthorizeView>
+                <Authorized Context="mobileAuth">
+                    <div class="border-t pt-2 mt-2" style="border-color: @(settings?.NavBorderColor ?? "#E5E7EB");">
+                        <a href="/profile" class="block py-2 px-2 rounded text-sm font-medium cs-nav-link"
+                           style="color: @(settings?.NavTextColor ?? "#374151");">
+                            @GetDisplayName(mobileAuth)
+                        </a>
+                        @if (settings?.EnableUserBlogSubmissions ?? false)
+                        {
+                            <a href="/submit-post" class="block py-2 px-2 rounded text-sm font-medium cs-nav-link"
+                               style="color: @(settings?.NavTextColor ?? "#374151");">
+                                Write
+                            </a>
+                            <a href="/my-posts" class="block py-2 px-2 rounded text-sm font-medium cs-nav-link"
+                               style="color: @(settings?.NavTextColor ?? "#374151");">
+                                My Posts
+                            </a>
+                        }
+                        <AuthorizeView Roles="Admin,Editor">
+                            <Authorized Context="mobileAdmin">
+                                <a href="/admin" class="block py-2 px-2 rounded text-sm font-medium cs-nav-link"
+                                   style="color: @(settings?.NavHoverColor ?? "#2563EB");">
+                                    Admin Panel
+                                </a>
+                            </Authorized>
+                        </AuthorizeView>
+                        <a href="/api/auth/logout?returnUrl=@(isMultilingual ? $"/{culture}/" : "/")"
+                           class="block py-2 px-2 rounded text-sm font-medium" style="color: #64748B;">
+                            Logout
+                        </a>
+                    </div>
+                </Authorized>
+                <NotAuthorized>
+                    @if (settings?.EnableUserRegistration ?? true)
+                    {
+                        <div class="border-t pt-2 mt-2" style="border-color: @(settings?.NavBorderColor ?? "#E5E7EB");">
+                            <a href="/login" class="block py-2 px-2 rounded text-sm font-medium cs-nav-link"
+                               style="color: @(settings?.NavTextColor ?? "#374151");">
+                                Sign In
+                            </a>
+                            <a href="/register" class="block py-2 px-2 rounded text-sm font-medium cs-nav-link"
+                               style="color: @(settings?.NavHoverColor ?? "#2563EB");">
+                                Sign Up
+                            </a>
+                        </div>
+                    }
+                </NotAuthorized>
+            </AuthorizeView>
+        </div>
+    </div>
+</nav>
+
+<style>
+    .cs-nav-link:hover {
+        color: @(settings?.NavHoverColor ?? "#2563EB") !important;
+    }
+    .cs-dropdown:hover .cs-dropdown-menu {
+        display: block;
+    }
+    .cs-dropdown-menu a:hover {
+        background-color: rgba(0,0,0,0.04);
+    }
+</style>
+
+@code {
+    private SiteSettings? settings;
+    private List<NavMenuItem> menuItems = [];
+    private bool isMultilingual = true;
+    private string culture => CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
+    private bool IsRtl => CultureInfo.CurrentCulture.TextInfo.IsRightToLeft;
+
+    protected override async Task OnInitializedAsync()
+    {
+        settings = await SettingsService.GetAsync();
+        isMultilingual = settings?.EnableMultilingual ?? true;
+        menuItems = await NavMenuService.GetMenuTreeAsync();
+    }
+
+    private string GetDisplayName(Microsoft.AspNetCore.Components.Authorization.AuthenticationState state)
+    {
+        var name = state.User.Identity?.Name ?? "User";
+        var atIndex = name.IndexOf('@');
+        return atIndex > 0 ? name[..atIndex] : name;
+    }
+
+    private string GetLabel(NavMenuItem item) =>
+        IsRtl && !string.IsNullOrEmpty(item.LabelFa) ? item.LabelFa : item.Label;
+
+    private string ResolveUrl(NavMenuItem item)
+    {
+        if (string.IsNullOrEmpty(item.Url)) return "#";
+        if (item.Url.StartsWith("http") || item.Url.StartsWith("#")) return item.Url;
+        return isMultilingual ? $"/{culture}/{item.Url.TrimStart('/')}" : $"/{item.Url.TrimStart('/')}";
+    }
+
+    private string GetLanguageSwitchUrl()
+    {
+        var uri = new Uri(Nav.Uri);
+        var path = uri.AbsolutePath.TrimEnd('/');
+
+        if (path.StartsWith("/en"))
+        {
+            var rest = path.Length > 3 ? path[3..] : "/";
+            return "/fa" + rest;
+        }
+        if (path.StartsWith("/fa"))
+        {
+            var rest = path.Length > 3 ? path[3..] : "/";
+            return "/en" + rest;
+        }
+
+        return IsRtl ? "/en/" : "/fa/";
+    }
+}

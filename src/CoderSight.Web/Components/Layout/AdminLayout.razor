@@ -1,0 +1,90 @@
+@inherits LayoutComponentBase
+
+<div class="min-h-screen flex bg-gray-100">
+    <aside class="w-64 bg-gray-900 text-gray-300 flex flex-col">
+        <div class="p-6">
+            <a href="/admin" class="text-xl font-bold text-white">CoderSight</a>
+            <p class="text-xs text-gray-500 mt-1">Admin Panel</p>
+        </div>
+        <nav class="flex-1 px-4 space-y-1">
+            <NavLink href="/admin" Match="NavLinkMatch.All"
+                     class="flex items-center px-3 py-2 rounded-md text-sm hover:bg-gray-800 hover:text-white transition-colors">
+                Dashboard
+            </NavLink>
+            <NavLink href="/admin/pages"
+                     class="flex items-center px-3 py-2 rounded-md text-sm hover:bg-gray-800 hover:text-white transition-colors">
+                Pages
+            </NavLink>
+            <NavLink href="/admin/blog"
+                     class="flex items-center px-3 py-2 rounded-md text-sm hover:bg-gray-800 hover:text-white transition-colors">
+                Blog Posts
+            </NavLink>
+            <NavLink href="/admin/categories"
+                     class="flex items-center px-3 py-2 rounded-md text-sm hover:bg-gray-800 hover:text-white transition-colors">
+                Categories
+            </NavLink>
+            <NavLink href="/admin/tags"
+                     class="flex items-center px-3 py-2 rounded-md text-sm hover:bg-gray-800 hover:text-white transition-colors">
+                Tags
+            </NavLink>
+            <NavLink href="/admin/media"
+                     class="flex items-center px-3 py-2 rounded-md text-sm hover:bg-gray-800 hover:text-white transition-colors">
+                Media
+            </NavLink>
+            <NavLink href="/admin/menu"
+                     class="flex items-center px-3 py-2 rounded-md text-sm hover:bg-gray-800 hover:text-white transition-colors">
+                Navigation
+            </NavLink>
+            <NavLink href="/admin/submissions"
+                     class="flex items-center px-3 py-2 rounded-md text-sm hover:bg-gray-800 hover:text-white transition-colors">
+                Submissions
+            </NavLink>
+            <NavLink href="/admin/comments"
+                     class="flex items-center px-3 py-2 rounded-md text-sm hover:bg-gray-800 hover:text-white transition-colors">
+                Comments
+            </NavLink>
+            <NavLink href="/admin/messages"
+                     class="flex items-center px-3 py-2 rounded-md text-sm hover:bg-gray-800 hover:text-white transition-colors">
+                Messages
+            </NavLink>
+            <NavLink href="/admin/subscribers"
+                     class="flex items-center px-3 py-2 rounded-md text-sm hover:bg-gray-800 hover:text-white transition-colors">
+                Subscribers
+            </NavLink>
+            <AuthorizeView Roles="Admin">
+                <Authorized>
+                    <NavLink href="/admin/users"
+                             class="flex items-center px-3 py-2 rounded-md text-sm hover:bg-gray-800 hover:text-white transition-colors">
+                        Users
+                    </NavLink>
+                    <NavLink href="/admin/settings"
+                             class="flex items-center px-3 py-2 rounded-md text-sm hover:bg-gray-800 hover:text-white transition-colors">
+                        Settings
+                    </NavLink>
+                </Authorized>
+            </AuthorizeView>
+        </nav>
+        <div class="p-4 border-t border-gray-800">
+            <a href="/en/" class="text-xs text-gray-500 hover:text-gray-300 transition-colors">
+                ← View Site
+            </a>
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col">
+        <header class="bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+            <h1 class="text-lg font-semibold text-gray-900">@PageTitle</h1>
+            <div class="flex items-center space-x-4">
+                <a href="/api/auth/logout?returnUrl=/admin/login" class="text-sm text-gray-500 hover:text-gray-700">Logout</a>
+            </div>
+        </header>
+        <main class="flex-1 p-6 overflow-y-auto">
+            @Body
+        </main>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter]
+    private string? PageTitle { get; set; }
+}

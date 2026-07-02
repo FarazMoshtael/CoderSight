@@ -1,0 +1,11 @@
+@using CoderSight.Core.Blocks.Data
+
+<section class="py-8 px-4">
+    <div class="max-w-6xl mx-auto">
+        @((MarkupString)(Data?.Html ?? ""))
+    </div>
+</section>
+
+@code {
+    [Parameter] public HtmlEmbedBlockData? Data { get; set; }
+}

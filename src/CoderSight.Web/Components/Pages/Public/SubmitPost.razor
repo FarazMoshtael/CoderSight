@@ -1,0 +1,459 @@
+@page "/submit-post"
+@attribute [Microsoft.AspNetCore.Authorization.Authorize]
+@inject IBlogService BlogService
+@inject ISiteSettingsService SettingsService
+@inject IMediaService MediaService
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager Nav
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IJSRuntime JS
+@using Microsoft.AspNetCore.Components.Authorization
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.AspNetCore.Identity
+@using CoderSight.Data
+@rendermode InteractiveServer
+
+<PageTitle>Submit a Blog Post — @SiteName</PageTitle>
+
+<div class="max-w-3xl mx-auto py-10 px-4">
+    @if (!submissionsEnabled)
+    {
+        <div class="text-center py-16">
+            <h1 class="text-2xl font-bold text-brand-navy mb-2">Submissions Closed</h1>
+            <p class="text-brand-slate text-sm">Blog post submissions are currently disabled.</p>
+            <a href="/" class="inline-block mt-4 text-sm font-semibold text-brand-blue hover:underline">Back to Home</a>
+        </div>
+    }
+    else if (submitted)
+    {
+        <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-8 text-center">
+            <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                </svg>
+            </div>
+            <h1 class="text-2xl font-bold text-brand-navy mb-2">Post Submitted!</h1>
+            <p class="text-brand-slate text-sm mb-6">Your blog post has been submitted for review. You'll be notified once it's approved.</p>
+            <div class="flex justify-center gap-3">
+                <a href="/submit-post" class="px-4 py-2 bg-brand-blue text-white rounded-lg text-sm font-medium hover:opacity-90">Submit Another</a>
+                <a href="/my-posts" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50">My Submissions</a>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="mb-8">
+            <h1 class="text-2xl font-bold text-brand-navy">Submit a Blog Post</h1>
+            <p class="text-brand-slate text-sm mt-1">Write your post and submit it for review. Once approved by an admin, it will be published on the site.</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="mb-4 px-4 py-3 rounded-md text-sm bg-red-50 text-red-700">@errorMessage</div>
+        }
+
+        <div class="space-y-6">
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Post Details</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Title *</label>
+                        <input type="text" @bind="title" maxlength="200" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" placeholder="Your blog post title" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Language</label>
+                        <select @bind="culture" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm">
+                            <option value="en">English</option>
+                            <option value="fa">فارسی</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Short Excerpt *</label>
+                        <textarea @bind="excerpt" rows="2" maxlength="500" class="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm" placeholder="A brief summary of your post (shown in blog listings)"></textarea>
+                        <p class="text-xs text-gray-400 mt-1">@(excerpt?.Length ?? 0)/500 characters</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Featured Image</label>
+                        <div class="flex items-center gap-3">
+                            @if (!string.IsNullOrEmpty(featuredImageUrl))
+                            {
+                                <img src="@featuredImageUrl" alt="Featured" class="h-16 w-24 rounded border border-gray-200 object-cover" />
+                            }
+                            <div>
+                                <label class="inline-flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors">
+                                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                    </svg>
+                                    @(uploadingImage ? "Uploading..." : "Upload Image")
+                                    <InputFile OnChange="OnFeaturedImageSelected" accept="image/*" class="hidden" disabled="@uploadingImage" />
+                                </label>
+                                @if (!string.IsNullOrEmpty(featuredImageUrl))
+                                {
+                                    <button type="button" @onclick="() => featuredImageUrl = null" class="ml-2 text-xs text-red-500 hover:text-red-700">Remove</button>
+                                }
+                                <p class="text-xs text-gray-400 mt-1">JPG, PNG or WebP. Max 5 MB.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Content *</h2>
+
+                <!-- Rich Text Toolbar -->
+                <div class="flex flex-wrap gap-1 p-2 border border-gray-300 rounded-t-lg bg-gray-50 border-b-0">
+                    <button type="button" onclick="csRte('formatBlock','<h2>')" class="cs-rte-btn" title="Heading 2">
+                        <span class="font-bold text-xs">H2</span>
+                    </button>
+                    <button type="button" onclick="csRte('formatBlock','<h3>')" class="cs-rte-btn" title="Heading 3">
+                        <span class="font-bold text-xs">H3</span>
+                    </button>
+                    <button type="button" onclick="csRte('formatBlock','<p>')" class="cs-rte-btn" title="Paragraph">
+                        <span class="text-xs">P</span>
+                    </button>
+                    <div class="w-px bg-gray-300 mx-1 self-stretch"></div>
+                    <button type="button" onclick="csRte('bold')" class="cs-rte-btn" title="Bold">
+                        <span class="font-bold text-xs">B</span>
+                    </button>
+                    <button type="button" onclick="csRte('italic')" class="cs-rte-btn" title="Italic">
+                        <span class="italic text-xs">I</span>
+                    </button>
+                    <button type="button" onclick="csRte('underline')" class="cs-rte-btn" title="Underline">
+                        <span class="underline text-xs">U</span>
+                    </button>
+                    <button type="button" onclick="csRte('strikeThrough')" class="cs-rte-btn" title="Strikethrough">
+                        <span class="line-through text-xs">S</span>
+                    </button>
+                    <div class="w-px bg-gray-300 mx-1 self-stretch"></div>
+                    <button type="button" onclick="csRte('insertUnorderedList')" class="cs-rte-btn" title="Bullet List">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/><circle cx="1" cy="6" r="1" fill="currentColor"/><circle cx="1" cy="12" r="1" fill="currentColor"/><circle cx="1" cy="18" r="1" fill="currentColor"/></svg>
+                    </button>
+                    <button type="button" onclick="csRte('insertOrderedList')" class="cs-rte-btn" title="Numbered List">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 6h13M8 12h13M8 18h13"/><text x="1" y="8" font-size="7" fill="currentColor" font-weight="bold">1</text><text x="1" y="14" font-size="7" fill="currentColor" font-weight="bold">2</text><text x="1" y="20" font-size="7" fill="currentColor" font-weight="bold">3</text></svg>
+                    </button>
+                    <div class="w-px bg-gray-300 mx-1 self-stretch"></div>
+                    <button type="button" onclick="csRte('formatBlock','<blockquote>')" class="cs-rte-btn" title="Blockquote">
+                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z"/></svg>
+                    </button>
+                    <button type="button" onclick="csRteCode()" class="cs-rte-btn" title="Code Block">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                    </button>
+                    <div class="w-px bg-gray-300 mx-1 self-stretch"></div>
+                    <button type="button" onclick="csRteLink()" class="cs-rte-btn" title="Insert Link">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                    </button>
+                    <label class="cs-rte-btn cursor-pointer" title="Insert Image">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <InputFile OnChange="OnEditorImageSelected" accept="image/*" class="hidden" disabled="@insertingImage" />
+                    </label>
+                    <div class="w-px bg-gray-300 mx-1 self-stretch"></div>
+                    <button type="button" onclick="csRte('removeFormat')" class="cs-rte-btn" title="Clear Formatting">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                </div>
+
+                <!-- Editable Content Area -->
+                <div id="cs-rte-editor"
+                     contenteditable="true"
+                     class="w-full border border-gray-300 rounded-b-lg px-4 py-3 text-sm min-h-[20rem] focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue prose prose-sm max-w-none"
+                     style="overflow-y: auto; max-height: 40rem;"
+                     data-placeholder="Start writing your blog post here...">
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3">
+                <a href="/" class="px-4 py-2.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50">Cancel</a>
+                <button @onclick="Submit" disabled="@saving" class="px-6 py-2.5 bg-brand-blue text-white rounded-lg text-sm font-semibold hover:opacity-90 disabled:opacity-50">
+                    @(saving ? "Submitting..." : "Submit for Review")
+                </button>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .cs-rte-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 0.375rem;
+        color: #374151;
+        transition: all 0.15s;
+        cursor: pointer;
+        border: none;
+        background: transparent;
+    }
+    .cs-rte-btn:hover {
+        background-color: #E5E7EB;
+        color: #2563EB;
+    }
+    #cs-rte-editor:empty::before {
+        content: attr(data-placeholder);
+        color: #9CA3AF;
+        pointer-events: none;
+    }
+    #cs-rte-editor blockquote {
+        border-left: 3px solid #D1D5DB;
+        padding-left: 1rem;
+        color: #6B7280;
+        margin: 0.5rem 0;
+    }
+    #cs-rte-editor pre {
+        background: #F3F4F6;
+        border-radius: 0.375rem;
+        padding: 0.75rem 1rem;
+        font-family: monospace;
+        font-size: 0.85em;
+        overflow-x: auto;
+    }
+    #cs-rte-editor img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 0.375rem;
+        margin: 0.5rem 0;
+    }
+    #cs-rte-editor a {
+        color: #2563EB;
+        text-decoration: underline;
+    }
+</style>
+
+<script suppress-error="BL9992">
+    function csRte(cmd, val) {
+        document.execCommand(cmd, false, val || null);
+        document.getElementById('cs-rte-editor').focus();
+    }
+    function csRteLink() {
+        var url = prompt('Enter URL:');
+        if (url) document.execCommand('createLink', false, url);
+    }
+    function csRteInsertImage(url) {
+        var el = document.getElementById('cs-rte-editor');
+        el.focus();
+        document.execCommand('insertImage', false, url);
+    }
+    function csRteCode() {
+        document.execCommand('formatBlock', false, '<pre>');
+    }
+    function csRteGetContent() {
+        var el = document.getElementById('cs-rte-editor');
+        return el ? el.innerHTML : '';
+    }
+</script>
+
+@code {
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    private bool submissionsEnabled;
+    private bool submitted;
+    private bool saving;
+    private bool uploadingImage;
+    private bool insertingImage;
+    private string? errorMessage;
+
+    private string title = "";
+    private string culture = "en";
+    private string excerpt = "";
+    private string? featuredImageUrl;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var settings = await SettingsService.GetAsync();
+        submissionsEnabled = settings?.EnableUserBlogSubmissions ?? false;
+    }
+
+    private async Task OnFeaturedImageSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file.Size > 5 * 1024 * 1024)
+        {
+            errorMessage = "Image is too large. Maximum size is 5 MB.";
+            return;
+        }
+
+        var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp", "image/gif" };
+        if (!allowedTypes.Contains(file.ContentType))
+        {
+            errorMessage = "Only JPG, PNG, WebP, and GIF files are allowed.";
+            return;
+        }
+
+        uploadingImage = true;
+        errorMessage = null;
+
+        try
+        {
+            using var stream = file.OpenReadStream(5 * 1024 * 1024);
+            var media = await MediaService.UploadAsync(stream, file.Name, file.ContentType);
+            featuredImageUrl = media.Url;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Upload failed: {ex.Message}";
+        }
+        finally
+        {
+            uploadingImage = false;
+        }
+    }
+
+    private async Task OnEditorImageSelected(InputFileChangeEventArgs e)
+    {
+        var file = e.File;
+        if (file.Size > 5 * 1024 * 1024)
+        {
+            errorMessage = "Image is too large. Maximum size is 5 MB.";
+            return;
+        }
+
+        var allowedTypes = new[] { "image/jpeg", "image/png", "image/webp", "image/gif" };
+        if (!allowedTypes.Contains(file.ContentType))
+        {
+            errorMessage = "Only JPG, PNG, WebP, and GIF files are allowed.";
+            return;
+        }
+
+        insertingImage = true;
+        errorMessage = null;
+
+        try
+        {
+            using var stream = file.OpenReadStream(5 * 1024 * 1024);
+            var media = await MediaService.UploadAsync(stream, file.Name, file.ContentType);
+            await JS.InvokeVoidAsync("csRteInsertImage", media.Url);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Image upload failed: {ex.Message}";
+        }
+        finally
+        {
+            insertingImage = false;
+        }
+    }
+
+    private async Task Submit()
+    {
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            errorMessage = "Title is required.";
+            return;
+        }
+        if (string.IsNullOrWhiteSpace(excerpt))
+        {
+            errorMessage = "Excerpt is required.";
+            return;
+        }
+        if (title.Length > 200 || excerpt.Length > 500)
+        {
+            errorMessage = "Input exceeds maximum length.";
+            return;
+        }
+
+        var content = await JS.InvokeAsync<string>("csRteGetContent");
+
+        if (string.IsNullOrWhiteSpace(content) || content == "<br>" || content == "<div><br></div>")
+        {
+            errorMessage = "Content is required.";
+            return;
+        }
+        if (content.Length > 100000)
+        {
+            errorMessage = "Content exceeds maximum length.";
+            return;
+        }
+
+        saving = true;
+        errorMessage = null;
+
+        try
+        {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = await UserManager.GetUserAsync(authState.User);
+            if (user is null)
+            {
+                errorMessage = "You must be logged in.";
+                saving = false;
+                return;
+            }
+
+            var slug = GenerateSlug(title);
+            var sanitizedContent = SanitizeHtml(content);
+
+            var plainText = System.Text.RegularExpressions.Regex.Replace(sanitizedContent, "<[^>]+>", " ");
+            var wordCount = plainText.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Length;
+
+            var page = new CoderSight.Core.Entities.Page
+            {
+                Id = Guid.NewGuid(),
+                Title = title.Trim(),
+                Slug = $"blog/{slug}",
+                Culture = culture,
+                Status = CoderSight.Core.Enums.PageStatus.PendingReview,
+                LocalizationGroupId = Guid.NewGuid(),
+                MetaTitle = title.Trim(),
+                MetaDescription = excerpt.Trim(),
+                Blocks =
+                [
+                    new CoderSight.Core.Entities.PageBlock
+                    {
+                        Id = Guid.NewGuid(),
+                        BlockType = "RichText",
+                        SortOrder = 0,
+                        Data = System.Text.Json.JsonSerializer.Serialize(new { Content = sanitizedContent })
+                    }
+                ]
+            };
+
+            var blogPost = new CoderSight.Core.Entities.BlogPost
+            {
+                Page = page,
+                PageId = page.Id,
+                Excerpt = excerpt.Trim(),
+                AuthorId = user.Id,
+                AuthorName = user.DisplayName,
+                AuthorAvatarUrl = user.AvatarUrl,
+                AuthorBio = user.Bio,
+                AuthorLinkedIn = user.LinkedIn,
+                AuthorTwitter = user.Twitter,
+                AuthorWebsite = user.Website,
+                FeaturedImageUrl = featuredImageUrl,
+                ReadTimeMinutes = Math.Max(1, (int)Math.Ceiling(wordCount / 200.0)),
+                SubmittedByUserId = user.Id
+            };
+
+            await BlogService.CreateAsync(blogPost);
+            submitted = true;
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            saving = false;
+        }
+    }
+
+    private static string GenerateSlug(string title)
+    {
+        var slug = title.ToLowerInvariant().Trim();
+        slug = System.Text.RegularExpressions.Regex.Replace(slug, @"[^a-z0-9؀-ۿ\s-]", "");
+        slug = System.Text.RegularExpressions.Regex.Replace(slug, @"[\s]+", "-");
+        slug = slug.Trim('-');
+        if (slug.Length > 80) slug = slug[..80].TrimEnd('-');
+        return $"{slug}-{Guid.NewGuid().ToString()[..8]}";
+    }
+
+    private static string SanitizeHtml(string html)
+    {
+        html = System.Text.RegularExpressions.Regex.Replace(html, @"<script[\s\S]*?</script>", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        html = System.Text.RegularExpressions.Regex.Replace(html, @"\s(on\w+)=""[^""]*""", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        html = System.Text.RegularExpressions.Regex.Replace(html, @"\s(on\w+)='[^']*'", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        return html;
+    }
+}

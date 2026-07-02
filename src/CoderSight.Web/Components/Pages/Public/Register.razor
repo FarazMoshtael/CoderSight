@@ -1,0 +1,131 @@
+@page "/register"
+@inject ISiteSettingsService SettingsService
+
+<PageTitle>Create Account — @SiteName</PageTitle>
+
+@if (!registrationEnabled)
+{
+    <div class="min-h-[70vh] flex items-center justify-center py-12 px-4">
+        <div class="text-center">
+            <h1 class="text-2xl font-bold mb-2" style="color: #020817;">Registration Disabled</h1>
+            <p class="text-sm" style="color: #64748B;">Public registration is currently disabled.</p>
+            <a href="/" class="inline-block mt-4 text-sm font-semibold hover:underline" style="color: #2563EB;">Back to Home</a>
+        </div>
+    </div>
+}
+else
+{
+<div class="min-h-[70vh] flex items-center justify-center py-12 px-4">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-8 w-full max-w-md">
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-bold" style="color: #020817;">Create Account</h1>
+            <p class="text-sm mt-2" style="color: #64748B;">Join the CoderSight community</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(ErrorParam))
+        {
+            <div class="mb-4 px-4 py-3 rounded-md text-sm bg-red-50 text-red-700">
+                @(ErrorParam switch
+                {
+                    "fields" => "Please fill in all fields.",
+                    "exists" => "An account with this email already exists.",
+                    "password" => "Password does not meet the requirements.",
+                    _ => "Something went wrong. Please try again."
+                })
+            </div>
+        }
+
+        <form method="post" action="/api/auth/register" id="csRegForm" onsubmit="return csRegValidate()" data-enhance="false">
+            <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+
+            <div style="position:absolute;left:-9999px;" aria-hidden="true"><textarea name="cs_hp" tabindex="-1" autocomplete="off" rows="1"></textarea></div>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-1" style="color: #020817;">Display Name</label>
+                    <input type="text" name="displayName" required
+                           class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
+                           style="border-color: #64748B40; color: #020817;"
+                           placeholder="John Doe" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1" style="color: #020817;">Email</label>
+                    <input type="email" name="email" required
+                           class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
+                           style="border-color: #64748B40; color: #020817;"
+                           placeholder="you@example.com" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1" style="color: #020817;">Password</label>
+                    <input type="password" name="password" required id="csRegPw"
+                           class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
+                           style="border-color: #64748B40; color: #020817;" />
+                    <div class="mt-2 space-y-1" id="csRegReqs">
+                        <div class="flex items-center gap-1.5" data-req="len">
+                            <svg class="w-3.5 h-3.5 shrink-0 cs-req-icon" viewBox="0 0 20 20" fill="currentColor"><circle cx="10" cy="10" r="4"/></svg>
+                            <span class="text-xs">At least 8 characters</span>
+                        </div>
+                        <div class="flex items-center gap-1.5" data-req="upper">
+                            <svg class="w-3.5 h-3.5 shrink-0 cs-req-icon" viewBox="0 0 20 20" fill="currentColor"><circle cx="10" cy="10" r="4"/></svg>
+                            <span class="text-xs">One uppercase letter</span>
+                        </div>
+                        <div class="flex items-center gap-1.5" data-req="lower">
+                            <svg class="w-3.5 h-3.5 shrink-0 cs-req-icon" viewBox="0 0 20 20" fill="currentColor"><circle cx="10" cy="10" r="4"/></svg>
+                            <span class="text-xs">One lowercase letter</span>
+                        </div>
+                        <div class="flex items-center gap-1.5" data-req="num">
+                            <svg class="w-3.5 h-3.5 shrink-0 cs-req-icon" viewBox="0 0 20 20" fill="currentColor"><circle cx="10" cy="10" r="4"/></svg>
+                            <span class="text-xs">One number</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-1" style="color: #020817;">Confirm Password</label>
+                    <input type="password" name="confirmPassword" required id="csRegPwConfirm"
+                           class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2"
+                           style="border-color: #64748B40; color: #020817;" />
+                    <p class="text-xs mt-1 hidden" id="csRegMismatch" style="color: #ef4444;">Passwords do not match.</p>
+                </div>
+                <button type="submit" id="csRegBtn" disabled
+                        class="w-full text-white py-2.5 rounded-lg text-sm font-semibold transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                        style="background-color: #2563EB;">
+                    Create Account
+                </button>
+            </div>
+        </form>
+
+        <p class="text-center text-sm mt-6" style="color: #64748B;">
+            Already have an account?
+            <a href="/login@(!string.IsNullOrEmpty(ReturnUrl) ? $"?returnUrl={Uri.EscapeDataString(ReturnUrl)}" : "")"
+               class="font-semibold hover:underline" style="color: #2563EB;">
+                Sign in
+            </a>
+        </p>
+    </div>
+</div>
+
+<style>
+    [data-req] { color: #94a3b8; }
+    [data-req].cs-req-pass { color: #16a34a; }
+    [data-req].cs-req-pass .cs-req-icon { color: #16a34a; }
+    [data-req] .cs-req-icon { color: #cbd5e1; }
+</style>
+}
+
+@code {
+    [SupplyParameterFromQuery(Name = "error")]
+    public string? ErrorParam { get; set; }
+
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
+
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    private bool registrationEnabled = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var s = await SettingsService.GetAsync();
+        registrationEnabled = s?.EnableUserRegistration ?? true;
+    }
+}

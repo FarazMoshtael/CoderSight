@@ -1,0 +1,94 @@
+@page "/admin"
+@layout AdminLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Editor")]
+@inject IPageService PageService
+@inject IBlogService BlogService
+
+<PageTitle>Dashboard — @SiteName Admin</PageTitle>
+<CascadingValue Value="@("Dashboard")" Name="PageTitle">
+</CascadingValue>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <p class="text-sm text-gray-500">Total Pages</p>
+        <p class="text-3xl font-bold text-gray-900 mt-2">@totalPages</p>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <p class="text-sm text-gray-500">Published Pages</p>
+        <p class="text-3xl font-bold text-green-600 mt-2">@publishedPages</p>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <p class="text-sm text-gray-500">Blog Posts</p>
+        <p class="text-3xl font-bold text-indigo-600 mt-2">@totalPosts</p>
+    </div>
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <p class="text-sm text-gray-500">Categories</p>
+        <p class="text-3xl font-bold text-amber-600 mt-2">@totalCategories</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold mb-4">Recent Pages</h2>
+        @if (recentPages.Any())
+        {
+            <div class="space-y-3">
+                @foreach (var pg in recentPages)
+                {
+                    <div class="flex justify-between items-center py-2 border-b border-gray-100 last:border-0">
+                        <div>
+                            <a href="@($"/admin/pages/edit/{pg.Id}")" class="text-sm font-medium text-gray-900 hover:text-indigo-600">
+                                @pg.Title
+                            </a>
+                            <p class="text-xs text-gray-500">/@pg.Culture/@pg.Slug</p>
+                        </div>
+                        <span class="text-xs px-2 py-1 rounded-full @(pg.Status == CoderSight.Core.Enums.PageStatus.Published ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700")">
+                            @pg.Status
+                        </span>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <p class="text-gray-500 text-sm">No pages yet.</p>
+        }
+    </div>
+
+    <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <h2 class="text-lg font-semibold mb-4">Quick Actions</h2>
+        <div class="space-y-3">
+            <a href="/admin/pages/new" class="block px-4 py-3 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors text-sm font-medium">
+                + Create New Page
+            </a>
+            <a href="/admin/blog/new" class="block px-4 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium">
+                + Write Blog Post
+            </a>
+            <a href="/admin/media" class="block px-4 py-3 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium">
+                Upload Media
+            </a>
+        </div>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    private int totalPages, publishedPages, totalPosts, totalCategories;
+    private List<Page> recentPages = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        var allPages = await PageService.GetAllAsync();
+        totalPages = allPages.Count;
+        publishedPages = allPages.Count(p => p.Status == CoderSight.Core.Enums.PageStatus.Published);
+        recentPages = allPages.Take(5).ToList();
+
+        var (posts, count) = await BlogService.GetPostsAsync("en");
+        totalPosts = count;
+
+        var categories = await BlogService.GetCategoriesAsync("en");
+        totalCategories = categories.Count;
+    }
+}

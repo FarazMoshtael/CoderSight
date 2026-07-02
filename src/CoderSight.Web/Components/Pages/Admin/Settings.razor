@@ -1,0 +1,399 @@
+@page "/admin/settings"
+@layout AdminLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
+@inject ISiteSettingsService SettingsService
+@inject IMediaService MediaService
+@rendermode InteractiveServer
+
+<PageTitle>Settings — @SiteName Admin</PageTitle>
+
+<div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Site Settings</h1>
+    <p class="text-sm text-gray-500 mt-1">Configure your website</p>
+</div>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="mb-4 px-4 py-3 rounded-md text-sm @(isError ? "bg-red-50 text-red-700" : "bg-green-50 text-green-700")">
+        @message
+    </div>
+}
+
+@if (settings is not null)
+{
+    <div class="max-w-2xl space-y-6">
+        <!-- General -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">General</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Site Name</label>
+                    <input type="text" @bind="settings.SiteName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Site URL</label>
+                    <input type="url" @bind="settings.SiteUrl" placeholder="https://codersight.com" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                    <p class="text-xs text-gray-400 mt-1">Used for Open Graph meta tags and social media previews. Leave empty to use the current server URL.</p>
+                </div>
+                <div class="flex items-center space-x-2 py-2">
+                    <input type="checkbox" id="enableMultilingual" @bind="settings.EnableMultilingual" class="rounded border-gray-300 text-brand-blue" />
+                    <label for="enableMultilingual" class="text-sm text-gray-700">Enable multilingual website</label>
+                </div>
+                <p class="text-xs text-gray-400 -mt-2">When disabled, the site will only show content in the default language and hide the language switcher.</p>
+                <div class="flex items-center space-x-2 py-2">
+                    <input type="checkbox" id="enableUserRegistration" @bind="settings.EnableUserRegistration" class="rounded border-gray-300 text-brand-blue" />
+                    <label for="enableUserRegistration" class="text-sm text-gray-700">Enable public user registration</label>
+                </div>
+                <p class="text-xs text-gray-400 -mt-2">When disabled, visitors cannot sign up or sign in. Existing sessions remain active.</p>
+                <div class="flex items-center space-x-2 py-2">
+                    <input type="checkbox" id="enableBlogComments" @bind="settings.EnableBlogComments" class="rounded border-gray-300 text-brand-blue" />
+                    <label for="enableBlogComments" class="text-sm text-gray-700">Enable blog comments</label>
+                </div>
+                <p class="text-xs text-gray-400 -mt-2">When disabled, the comment section is hidden on all blog posts.</p>
+                <div class="flex items-center space-x-2 py-2">
+                    <input type="checkbox" id="enableUserBlogSubmissions" @bind="settings.EnableUserBlogSubmissions" class="rounded border-gray-300 text-brand-blue" />
+                    <label for="enableUserBlogSubmissions" class="text-sm text-gray-700">Allow users to submit blog posts</label>
+                </div>
+                <p class="text-xs text-gray-400 -mt-2">When enabled, logged-in users can submit blog posts for admin review before publishing.</p>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Default Culture</label>
+                        <select @bind="settings.DefaultCulture" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                            <option value="en">English</option>
+                            <option value="fa">فارسی</option>
+                        </select>
+                    </div>
+                    @if (settings.EnableMultilingual)
+                    {
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Supported Cultures</label>
+                            <input type="text" @bind="settings.SupportedCultures" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="en,fa" />
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Branding -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Branding</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Logo</label>
+                    <div class="flex gap-2 items-start">
+                        <input type="text" @bind="settings.LogoUrl" class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="/uploads/logo.png" />
+                        <button type="button" @onclick='() => OpenPicker("logo")' class="shrink-0 bg-brand-blue text-white px-3 py-2 rounded-md text-sm font-medium hover:opacity-90 transition-opacity">
+                            Browse
+                        </button>
+                    </div>
+                    @if (!string.IsNullOrEmpty(settings.LogoUrl))
+                    {
+                        <img src="@settings.LogoUrl" alt="Logo preview" class="mt-2 h-12 w-auto rounded border border-gray-200" />
+                    }
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Favicon</label>
+                    <div class="flex gap-2 items-start">
+                        <input type="text" @bind="settings.FaviconUrl" class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="/uploads/favicon.png" />
+                        <button type="button" @onclick='() => OpenPicker("favicon")' class="shrink-0 bg-brand-blue text-white px-3 py-2 rounded-md text-sm font-medium hover:opacity-90 transition-opacity">
+                            Browse
+                        </button>
+                    </div>
+                    @if (!string.IsNullOrEmpty(settings.FaviconUrl))
+                    {
+                        <img src="@settings.FaviconUrl" alt="Favicon preview" class="mt-2 h-8 w-auto rounded border border-gray-200" />
+                    }
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">OpenGraph Image</label>
+                    <p class="text-xs text-gray-400 mb-1">Preview image when the site is shared on social media. Recommended: 1200x630px.</p>
+                    <div class="flex gap-2 items-start">
+                        <input type="text" @bind="settings.OgImageUrl" class="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="/uploads/og-image.png" />
+                        <button type="button" @onclick='() => OpenPicker("ogimage")' class="shrink-0 bg-brand-blue text-white px-3 py-2 rounded-md text-sm font-medium hover:opacity-90 transition-opacity">
+                            Browse
+                        </button>
+                    </div>
+                    @if (!string.IsNullOrEmpty(settings.OgImageUrl))
+                    {
+                        <img src="@settings.OgImageUrl" alt="OG image preview" class="mt-2 h-16 w-auto rounded border border-gray-200" />
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Site Background -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Site Background</h2>
+            <div>
+                @ColorField("Background Color", settings.SiteBackgroundColor, v => settings.SiteBackgroundColor = v)
+            </div>
+        </div>
+
+        <!-- Navbar Style -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Navbar Style</h2>
+            <div class="mb-4 rounded-lg border border-gray-200 overflow-hidden">
+                <div class="px-4 py-3 flex items-center justify-between text-sm"
+                     style="background-color: @settings.NavBackgroundColor; border-bottom: 1px solid @settings.NavBorderColor;">
+                    <div class="flex items-center gap-4">
+                        <span class="font-bold" style="color: @settings.NavLogoTextColor;">CoderSight</span>
+                        <span style="color: @settings.NavTextColor;">Home</span>
+                        <span style="color: @settings.NavHoverColor;">Blog</span>
+                    </div>
+                    <span class="text-xs text-gray-400 italic">Preview</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                @ColorField("Background", settings.NavBackgroundColor, v => settings.NavBackgroundColor = v)
+                @ColorField("Text Color", settings.NavTextColor, v => settings.NavTextColor = v)
+                @ColorField("Logo Text", settings.NavLogoTextColor, v => settings.NavLogoTextColor = v)
+                @ColorField("Hover Color", settings.NavHoverColor, v => settings.NavHoverColor = v)
+                @ColorField("Border Color", settings.NavBorderColor, v => settings.NavBorderColor = v)
+            </div>
+            <h3 class="text-xs font-medium text-gray-500 uppercase tracking-wider mt-5 mb-3">Size</h3>
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Navbar Height</label>
+                    <select @bind="settings.NavHeight" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                        <option value="3rem">Small (3rem)</option>
+                        <option value="3.5rem">Medium-Small (3.5rem)</option>
+                        <option value="4rem">Default (4rem)</option>
+                        <option value="5rem">Large (5rem)</option>
+                        <option value="6rem">Extra Large (6rem)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Logo Height</label>
+                    <select @bind="settings.NavLogoHeight" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                        <option value="1.5rem">Small (1.5rem)</option>
+                        <option value="2rem">Default (2rem)</option>
+                        <option value="2.5rem">Medium (2.5rem)</option>
+                        <option value="3rem">Large (3rem)</option>
+                        <option value="4rem">Extra Large (4rem)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1">Logo Text Size</label>
+                    <select @bind="settings.NavLogoFontSize" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                        <option value="0.875rem">Small</option>
+                        <option value="1rem">Base</option>
+                        <option value="1.125rem">Medium</option>
+                        <option value="1.25rem">Default (1.25rem)</option>
+                        <option value="1.5rem">Large</option>
+                        <option value="1.75rem">XL</option>
+                        <option value="2rem">2XL</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Style -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Footer Style</h2>
+            <div class="mb-4 rounded-lg overflow-hidden">
+                <div class="px-4 py-3 text-sm"
+                     style="background-color: @settings.FooterBackgroundColor; border-bottom: 1px solid @settings.FooterBorderColor;">
+                    <span class="font-semibold" style="color: @settings.FooterHeadingColor;">CoderSight</span>
+                    <span class="mx-2" style="color: @settings.FooterTextColor;">© 2026 All rights reserved.</span>
+                    <span class="text-xs italic opacity-50" style="color: @settings.FooterTextColor;">Preview</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+                @ColorField("Background", settings.FooterBackgroundColor, v => settings.FooterBackgroundColor = v)
+                @ColorField("Text Color", settings.FooterTextColor, v => settings.FooterTextColor = v)
+                @ColorField("Heading Color", settings.FooterHeadingColor, v => settings.FooterHeadingColor = v)
+                @ColorField("Link Hover", settings.FooterLinkHoverColor, v => settings.FooterLinkHoverColor = v)
+                @ColorField("Border Color", settings.FooterBorderColor, v => settings.FooterBorderColor = v)
+            </div>
+        </div>
+
+        <!-- Footer Content -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Footer Content</h2>
+            <div>
+                <label class="block text-sm font-medium text-gray-700 mb-1">Footer Text</label>
+                <textarea @bind="settings.FooterText" rows="2" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"></textarea>
+            </div>
+        </div>
+
+        <!-- Social Links -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Social Links</h2>
+            <p class="text-xs text-gray-400 mb-4">Leave blank to hide the link from the footer.</p>
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">GitHub</label>
+                    <input type="url" @bind="settings.SocialGitHub" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="https://github.com/username" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Twitter / X</label>
+                    <input type="url" @bind="settings.SocialTwitter" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="https://x.com/username" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">LinkedIn</label>
+                    <input type="url" @bind="settings.SocialLinkedIn" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="https://linkedin.com/in/username" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Instagram</label>
+                    <input type="url" @bind="settings.SocialInstagram" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="https://instagram.com/username" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">YouTube</label>
+                    <input type="url" @bind="settings.SocialYouTube" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="https://youtube.com/@@channel" />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Telegram</label>
+                    <input type="url" @bind="settings.SocialTelegram" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="https://t.me/username" />
+                </div>
+            </div>
+        </div>
+
+        <!-- SEO & Analytics -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">SEO & Analytics</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Default Meta Description</label>
+                    <textarea @bind="settings.DefaultMetaDescription" rows="2" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Google Analytics ID</label>
+                    <input type="text" @bind="settings.GoogleAnalyticsId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="G-XXXXXXXXXX" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Email / SMTP Settings -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-4">Email / SMTP Settings</h2>
+            <p class="text-xs text-gray-500 mb-4">Configure SMTP to enable newsletter email notifications when new articles are published.</p>
+            <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">SMTP Host</label>
+                        <input type="text" @bind="settings.SmtpHost" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="smtp.gmail.com" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">SMTP Port</label>
+                        <input type="number" @bind="settings.SmtpPort" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
+                        <input type="text" @bind="settings.SmtpUsername" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="your@email.com" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <input type="password" @bind="settings.SmtpPassword" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" />
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">From Email</label>
+                        <input type="email" @bind="settings.SmtpFromEmail" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="noreply@codersight.com" />
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">From Name</label>
+                        <input type="text" @bind="settings.SmtpFromName" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="CoderSight" />
+                    </div>
+                </div>
+                <label class="flex items-center gap-2">
+                    <input type="checkbox" @bind="settings.SmtpUseSsl" class="rounded border-gray-300 text-brand-blue" />
+                    <span class="text-sm text-gray-700">Use SSL/TLS</span>
+                </label>
+            </div>
+        </div>
+
+        <button @onclick="SaveSettings" class="px-6 py-2 bg-brand-blue text-white rounded-md text-sm hover:opacity-90 transition-opacity">
+            Save Settings
+        </button>
+    </div>
+}
+
+<MediaPickerModal @bind-IsVisible="showMediaPicker"
+                  CurrentUrl="@pickerCurrentUrl"
+                  OnSelected="OnMediaPicked" />
+
+@code {
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    private SiteSettings? settings;
+    private string? message;
+    private bool isError;
+
+    private bool showMediaPicker;
+    private string? pickerCurrentUrl;
+    private string? pickerTarget;
+
+    private static readonly string[] brandSwatches = ["#2563EB", "#020817", "#1A2233", "#64748B", "#FFFFFF", "#F9FAFB", "#111827", "#1F2937", "#374151", "#9CA3AF", "#E5E7EB", "transparent"];
+
+    protected override async Task OnInitializedAsync()
+    {
+        settings = await SettingsService.GetAsync();
+    }
+
+    private RenderFragment ColorField(string label, string currentValue, Action<string> setter) => __builder =>
+    {
+        <div>
+            <label class="block text-xs font-medium text-gray-600 mb-1">@label</label>
+            <div class="flex gap-2 items-center">
+                <input type="color" value="@(currentValue == "transparent" ? "#ffffff" : currentValue)"
+                       @onchange="e => { setter(e.Value?.ToString() ?? currentValue); StateHasChanged(); }"
+                       class="w-8 h-8 rounded border border-gray-300 cursor-pointer p-0" />
+                <input type="text" value="@currentValue"
+                       @onchange="e => { setter(e.Value?.ToString() ?? currentValue); StateHasChanged(); }"
+                       class="flex-1 border border-gray-300 rounded px-2 py-1 text-xs font-mono" />
+            </div>
+            <div class="flex gap-1 mt-1.5 flex-wrap">
+                @foreach (var swatch in brandSwatches)
+                {
+                    var s = swatch;
+                    <button type="button"
+                            @onclick="() => { setter(s); StateHasChanged(); }"
+                            class="w-5 h-5 rounded border @(currentValue == s ? "ring-2 ring-brand-blue ring-offset-1" : "border-gray-300")"
+                            style="background-color: @(s == "transparent" ? "#ffffff" : s); @(s == "transparent" ? "background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%), linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%); background-size: 6px 6px; background-position: 0 0, 3px 3px;" : "")"
+                            title="@s">
+                    </button>
+                }
+            </div>
+        </div>
+    };
+
+    private void OpenPicker(string target)
+    {
+        pickerTarget = target;
+        pickerCurrentUrl = target switch
+        {
+            "logo" => settings?.LogoUrl,
+            "favicon" => settings?.FaviconUrl,
+            "ogimage" => settings?.OgImageUrl,
+            _ => null
+        };
+        showMediaPicker = true;
+    }
+
+    private async Task OnMediaPicked(string url)
+    {
+        if (settings is null) return;
+        if (pickerTarget == "logo")
+            settings.LogoUrl = url;
+        else if (pickerTarget == "favicon")
+            settings.FaviconUrl = url;
+        else if (pickerTarget == "ogimage")
+            settings.OgImageUrl = url;
+        showMediaPicker = false;
+    }
+
+    private async Task SaveSettings()
+    {
+        try
+        {
+            await SettingsService.UpdateAsync(settings!);
+            message = "Settings saved. Changes will appear on the next page load.";
+            isError = false;
+        }
+        catch (Exception ex) { message = ex.Message; isError = true; }
+    }
+}

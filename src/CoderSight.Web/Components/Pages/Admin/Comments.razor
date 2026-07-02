@@ -1,0 +1,138 @@
+@page "/admin/comments"
+@layout AdminLayout
+@attribute [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin,Editor")]
+@inject ICommentService CommentService
+@rendermode InteractiveServer
+
+<PageTitle>Comments — @SiteName Admin</PageTitle>
+
+<div class="flex justify-between items-center mb-6">
+    <div>
+        <h1 class="text-2xl font-bold text-gray-900">Comments</h1>
+        <p class="text-sm text-gray-500 mt-1">@pendingCount pending approval</p>
+    </div>
+    <div class="flex gap-2">
+        <button @onclick='() => SetFilter("pending")' class="text-sm px-3 py-1.5 rounded-md border transition-colors @(filter == "pending" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50")">
+            Pending (@pendingCount)
+        </button>
+        <button @onclick='() => SetFilter("approved")' class="text-sm px-3 py-1.5 rounded-md border transition-colors @(filter == "approved" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50")">
+            Approved
+        </button>
+        <button @onclick='() => SetFilter("all")' class="text-sm px-3 py-1.5 rounded-md border transition-colors @(filter == "all" ? "bg-blue-600 text-white border-blue-600" : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50")">
+            All
+        </button>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(statusMessage))
+{
+    <div class="mb-4 px-4 py-3 rounded-md text-sm bg-green-50 text-green-700">@statusMessage</div>
+}
+
+@if (comments.Any())
+{
+    <div class="space-y-3">
+        @foreach (var comment in comments)
+        {
+            <div class="bg-white rounded-lg border @(!comment.IsApproved ? "border-yellow-300 border-l-4" : "border-gray-200") p-5">
+                <div class="flex justify-between items-start">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-3 mb-1">
+                            <span class="font-medium text-sm text-gray-900">@comment.UserDisplayName</span>
+                            @if (!comment.IsApproved)
+                            {
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-yellow-100 text-yellow-800">Pending</span>
+                            }
+                            else
+                            {
+                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-100 text-green-800">Approved</span>
+                            }
+                        </div>
+                        <p class="text-sm text-gray-600 whitespace-pre-wrap leading-relaxed mb-2">@comment.Body</p>
+                        <div class="flex items-center gap-3">
+                            <span class="text-xs text-gray-400">@comment.CreatedAt.ToString("MMM dd, yyyy — HH:mm")</span>
+                            @if (comment.BlogPost?.Page is not null)
+                            {
+                                <span class="text-xs text-gray-400">on: @comment.BlogPost.Page.Title</span>
+                            }
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2 ms-4">
+                        @if (!comment.IsApproved)
+                        {
+                            <button @onclick="() => Approve(comment.Id)" class="text-xs px-3 py-1.5 rounded-md bg-green-600 text-white hover:bg-green-700 transition-colors">
+                                Approve
+                            </button>
+                        }
+                        else
+                        {
+                            <button @onclick="() => Reject(comment.Id)" class="text-xs px-3 py-1.5 rounded-md bg-yellow-500 text-white hover:bg-yellow-600 transition-colors">
+                                Unapprove
+                            </button>
+                        }
+                        <button @onclick="() => Delete(comment.Id)" class="text-xs px-3 py-1.5 rounded-md bg-red-600 text-white hover:bg-red-700 transition-colors">
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="text-center py-12 text-gray-400">
+        <p class="text-sm">No @(filter == "all" ? "" : filter + " ")comments.</p>
+    </div>
+}
+
+@code {
+    [CascadingParameter(Name = "SiteName")]
+    private string SiteName { get; set; } = "CoderSight";
+
+    private List<CoderSight.Core.Entities.BlogComment> comments = [];
+    private int pendingCount;
+    private string filter = "pending";
+    private string? statusMessage;
+
+    protected override async Task OnInitializedAsync() => await LoadComments();
+
+    private async Task LoadComments()
+    {
+        pendingCount = await CommentService.GetPendingCountAsync();
+        comments = filter switch
+        {
+            "pending" => await CommentService.GetPendingAsync(),
+            "approved" => (await CommentService.GetAllAsync()).Where(c => c.IsApproved).ToList(),
+            _ => await CommentService.GetAllAsync()
+        };
+    }
+
+    private async Task SetFilter(string newFilter)
+    {
+        filter = newFilter;
+        statusMessage = null;
+        await LoadComments();
+    }
+
+    private async Task Approve(Guid id)
+    {
+        await CommentService.ApproveAsync(id);
+        statusMessage = "Comment approved.";
+        await LoadComments();
+    }
+
+    private async Task Reject(Guid id)
+    {
+        await CommentService.RejectAsync(id);
+        statusMessage = "Comment unapproved.";
+        await LoadComments();
+    }
+
+    private async Task Delete(Guid id)
+    {
+        await CommentService.DeleteAsync(id);
+        statusMessage = "Comment deleted.";
+        await LoadComments();
+    }
+}

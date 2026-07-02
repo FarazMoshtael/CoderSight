@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/CoderSight.Core/CoderSight.Core.csproj" />
+    <Project Path="src/CoderSight.Data/CoderSight.Data.csproj" />
+    <Project Path="src/CoderSight.Web/CoderSight.Web.csproj" />
+  </Folder>
+</Solution>
