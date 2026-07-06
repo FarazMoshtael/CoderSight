@@ -1,4 +1,5 @@
 @using CoderSight.Core.Blocks.Data
+@inject ITurnstileService TurnstileService
 
 <section class="py-16 px-4 bg-brand-navy text-white">
     <div class="max-w-2xl mx-auto text-center">
@@ -13,6 +14,10 @@
             <input type="email" name="email" required
                    placeholder="@(Data?.Placeholder ?? "Enter your email")"
                    class="px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
+            @if (TurnstileService.IsEnabled)
+            {
+                <div class="cf-turnstile" data-sitekey="@TurnstileService.SiteKey" data-theme="dark"></div>
+            }
             <button type="submit" class="bg-brand-blue text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity">
                 @(Data?.ButtonText ?? "Subscribe")
             </button>

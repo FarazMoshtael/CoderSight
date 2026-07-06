@@ -78,6 +78,8 @@ builder.Services.AddScoped<IEmailService, SmtpEmailService>();
 builder.Services.AddScoped<INewsletterService, NewsletterService>();
 builder.Services.AddScoped<IContactService, ContactService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddHttpClient();
+builder.Services.AddScoped<ITurnstileService, TurnstileService>();
 builder.Services.AddSingleton<INotificationQueue, NotificationQueue>();
 builder.Services.AddHostedService<CoderSight.Web.Services.NotificationBackgroundService>();
 builder.Services.AddScoped<IMediaService>(sp =>
@@ -127,10 +129,14 @@ app.UseAntiforgery();
 app.MapPost("/api/auth/login", async (
     HttpContext httpContext,
     SignInManager<ApplicationUser> signInManager,
-    UserManager<ApplicationUser> userManager) =>
+    UserManager<ApplicationUser> userManager,
+    ITurnstileService turnstile) =>
 {
     var form = await httpContext.Request.ReadFormAsync();
     if (!string.IsNullOrEmpty(form["cs_hp"].ToString()))
+        return Results.Redirect("/login?error=1");
+
+    if (!await turnstile.VerifyAsync(form["cf-turnstile-response"], httpContext.Connection.RemoteIpAddress?.ToString()))
         return Results.Redirect("/login?error=1");
 
     var email = form["email"].ToString().Trim();
@@ -167,7 +173,8 @@ app.MapPost("/api/auth/register", async (
     HttpContext httpContext,
     UserManager<ApplicationUser> userManager,
     SignInManager<ApplicationUser> signInManager,
-    ISiteSettingsService settingsService) =>
+    ISiteSettingsService settingsService,
+    ITurnstileService turnstile) =>
 {
     var siteSettings = await settingsService.GetAsync();
     if (siteSettings is not null && !siteSettings.EnableUserRegistration)
@@ -176,6 +183,9 @@ app.MapPost("/api/auth/register", async (
     var form = await httpContext.Request.ReadFormAsync();
     if (!string.IsNullOrEmpty(form["cs_hp"].ToString()))
         return Results.Redirect("/register");
+
+    if (!await turnstile.VerifyAsync(form["cf-turnstile-response"], httpContext.Connection.RemoteIpAddress?.ToString()))
+        return Results.Redirect("/register?error=captcha");
 
     var displayName = form["displayName"].ToString().Trim();
     var email = form["email"].ToString().Trim();
@@ -227,10 +237,14 @@ app.MapPost("/api/auth/forgot-password", async (
     HttpContext httpContext,
     UserManager<ApplicationUser> userManager,
     IEmailService emailService,
-    ISiteSettingsService settingsService) =>
+    ISiteSettingsService settingsService,
+    ITurnstileService turnstile) =>
 {
     var form = await httpContext.Request.ReadFormAsync();
     if (!string.IsNullOrEmpty(form["cs_hp"].ToString()))
+        return Results.Redirect("/forgot-password?status=sent");
+
+    if (!await turnstile.VerifyAsync(form["cf-turnstile-response"], httpContext.Connection.RemoteIpAddress?.ToString()))
         return Results.Redirect("/forgot-password?status=sent");
 
     var email = form["email"].ToString().Trim();
@@ -279,10 +293,14 @@ app.MapPost("/api/auth/forgot-password", async (
 
 app.MapPost("/api/auth/reset-password", async (
     HttpContext httpContext,
-    UserManager<ApplicationUser> userManager) =>
+    UserManager<ApplicationUser> userManager,
+    ITurnstileService turnstile) =>
 {
     var form = await httpContext.Request.ReadFormAsync();
     if (!string.IsNullOrEmpty(form["cs_hp"].ToString()))
+        return Results.Redirect("/reset-password?status=invalid");
+
+    if (!await turnstile.VerifyAsync(form["cf-turnstile-response"], httpContext.Connection.RemoteIpAddress?.ToString()))
         return Results.Redirect("/reset-password?status=invalid");
 
     var email = form["email"].ToString().Trim();
@@ -313,11 +331,14 @@ app.MapPost("/api/auth/reset-password", async (
     return Results.Redirect("/reset-password?status=success");
 }).DisableAntiforgery().RequireRateLimiting("auth");
 
-app.MapPost("/api/newsletter/subscribe", async (HttpContext httpContext, INewsletterService newsletter) =>
+app.MapPost("/api/newsletter/subscribe", async (HttpContext httpContext, INewsletterService newsletter, ITurnstileService turnstile) =>
 {
     var form = await httpContext.Request.ReadFormAsync();
     if (!string.IsNullOrEmpty(form["cs_hp"].ToString()))
         return Results.Json(new { success = false, message = "Invalid request." });
+
+    if (!await turnstile.VerifyAsync(form["cf-turnstile-response"], httpContext.Connection.RemoteIpAddress?.ToString()))
+        return Results.Json(new { success = false, message = "Verification failed. Please try again." });
 
     var email = form["email"].ToString().Trim();
     if (string.IsNullOrEmpty(email) || !email.Contains('@') || email.Length > 256 || email.Length < 5)
@@ -335,11 +356,14 @@ app.MapGet("/api/newsletter/unsubscribe", async (string token, INewsletterServic
         : Results.Redirect("/unsubscribe?status=invalid");
 });
 
-app.MapPost("/api/contact", async (HttpContext httpContext, IContactService contactService) =>
+app.MapPost("/api/contact", async (HttpContext httpContext, IContactService contactService, ITurnstileService turnstile) =>
 {
     var form = await httpContext.Request.ReadFormAsync();
     if (!string.IsNullOrEmpty(form["cs_hp"].ToString()))
         return Results.Json(new { success = false, message = "Invalid request." });
+
+    if (!await turnstile.VerifyAsync(form["cf-turnstile-response"], httpContext.Connection.RemoteIpAddress?.ToString()))
+        return Results.Json(new { success = false, message = "Verification failed. Please try again." });
 
     var name = form["name"].ToString().Trim();
     var email = form["email"].ToString().Trim();

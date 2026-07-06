@@ -1,5 +1,6 @@
 @using System.Globalization
 @inject ISiteSettingsService SettingsService
+@inject ITurnstileService TurnstileService
 
 <!DOCTYPE html>
 <html lang="@CultureInfo.CurrentCulture.TwoLetterISOLanguageName"
@@ -88,10 +89,13 @@
 <body class="@(CultureInfo.CurrentCulture.TwoLetterISOLanguageName == "fa" ? "font-vazirmatn" : "font-sora") bg-gray-50 text-brand-navy antialiased">
     <CascadingAuthenticationState>
         <CascadingValue Value="@_siteName" Name="SiteName">
+        <CascadingValue Value="@_turnstileSiteKey" Name="TurnstileSiteKey">
             <Routes />
+        </CascadingValue>
         </CascadingValue>
     </CascadingAuthenticationState>
     <ReconnectModal />
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
     <script src="@Assets["js/site.js"]"></script>
     <script>
@@ -112,6 +116,7 @@
     private string? _ogImageUrl;
     private string? _metaDescription;
     private string _siteName = "CoderSight";
+    private string? _turnstileSiteKey;
 
     protected override async Task OnInitializedAsync()
     {
@@ -120,6 +125,7 @@
         _faviconUrl = settings?.FaviconUrl;
         _siteName = settings?.SiteName ?? "CoderSight";
         _metaDescription = settings?.DefaultMetaDescription;
+        _turnstileSiteKey = TurnstileService.IsEnabled ? TurnstileService.SiteKey : null;
 
         var ogImage = settings?.OgImageUrl ?? settings?.LogoUrl;
         if (!string.IsNullOrEmpty(ogImage))

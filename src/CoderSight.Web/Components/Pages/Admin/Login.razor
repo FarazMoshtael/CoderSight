@@ -34,6 +34,10 @@
                     <input type="password" name="password" required
                            class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-indigo-500 focus:border-indigo-500" />
                 </div>
+                @if (!string.IsNullOrEmpty(TurnstileSiteKey))
+                {
+                    <div class="cf-turnstile" data-sitekey="@TurnstileSiteKey" data-theme="light"></div>
+                }
                 <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded-md text-sm font-medium hover:bg-indigo-700 transition-colors">
                     Sign In
                 </button>
@@ -47,6 +51,9 @@
 @code {
     [CascadingParameter(Name = "SiteName")]
     private string SiteName { get; set; } = "CoderSight";
+
+    [CascadingParameter(Name = "TurnstileSiteKey")]
+    private string? TurnstileSiteKey { get; set; }
 
     [SupplyParameterFromQuery(Name = "error")]
     public string? ErrorParam { get; set; }

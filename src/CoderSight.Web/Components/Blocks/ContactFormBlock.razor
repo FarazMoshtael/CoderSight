@@ -1,4 +1,5 @@
 @using CoderSight.Core.Blocks.Data
+@inject ITurnstileService TurnstileService
 
 <section class="py-16 px-4">
     <div class="max-w-2xl mx-auto">
@@ -54,6 +55,10 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">Message *</label>
                     <textarea rows="4" name="message" required class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"></textarea>
                 </div>
+            }
+            @if (TurnstileService.IsEnabled)
+            {
+                <div class="cf-turnstile" data-sitekey="@TurnstileService.SiteKey" data-theme="light"></div>
             }
             <div>
                 <button type="submit"

@@ -1,3 +1,17 @@
+function csGetTurnstileToken(form) {
+    var input = form.querySelector('[name="cf-turnstile-response"]');
+    return input ? input.value : '';
+}
+
+function csResetTurnstile(form) {
+    var widget = form.querySelector('.cf-turnstile');
+    if (widget && window.turnstile) {
+        var widgetId = widget.getAttribute('data-turnstile-id');
+        if (widgetId) turnstile.reset(widgetId);
+        else turnstile.reset();
+    }
+}
+
 function csSubscribe(form) {
     var email = form.email.value;
     var msg = document.getElementById('cs-newsletter-msg');
@@ -5,10 +19,13 @@ function csSubscribe(form) {
     if (!email || !msg) return false;
     btn.disabled = true;
     btn.textContent = 'Subscribing...';
+    var body = 'email=' + encodeURIComponent(email);
+    var token = csGetTurnstileToken(form);
+    if (token) body += '&cf-turnstile-response=' + encodeURIComponent(token);
     fetch('/api/newsletter/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'email=' + encodeURIComponent(email)
+        body: body
     })
     .then(function(r) { return r.json(); })
     .then(function(data) {
@@ -23,6 +40,7 @@ function csSubscribe(form) {
     .finally(function() {
         btn.disabled = false;
         btn.textContent = form.dataset.btnText || 'Subscribe';
+        csResetTurnstile(form);
     });
     return false;
 }
@@ -33,7 +51,8 @@ function csContactSubmit(form) {
     var btnText = btn.textContent;
     btn.disabled = true;
     btn.textContent = 'Sending...';
-    var body = new URLSearchParams(new FormData(form)).toString();
+    var formData = new FormData(form);
+    var body = new URLSearchParams(formData).toString();
     fetch('/api/contact', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
@@ -56,6 +75,7 @@ function csContactSubmit(form) {
     .finally(function() {
         btn.disabled = false;
         btn.textContent = btnText;
+        csResetTurnstile(form);
     });
     return false;
 }

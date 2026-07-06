@@ -30,6 +30,7 @@ else
                     "fields" => "Please fill in all fields.",
                     "exists" => "An account with this email already exists.",
                     "password" => "Password does not meet the requirements.",
+                    "captcha" => "Verification failed. Please try again.",
                     _ => "Something went wrong. Please try again."
                 })
             </div>
@@ -85,6 +86,10 @@ else
                            style="border-color: #64748B40; color: #020817;" />
                     <p class="text-xs mt-1 hidden" id="csRegMismatch" style="color: #ef4444;">Passwords do not match.</p>
                 </div>
+                @if (!string.IsNullOrEmpty(TurnstileSiteKey))
+                {
+                    <div class="cf-turnstile" data-sitekey="@TurnstileSiteKey" data-theme="light"></div>
+                }
                 <button type="submit" id="csRegBtn" disabled
                         class="w-full text-white py-2.5 rounded-lg text-sm font-semibold transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                         style="background-color: #2563EB;">
@@ -120,6 +125,9 @@ else
 
     [CascadingParameter(Name = "SiteName")]
     private string SiteName { get; set; } = "CoderSight";
+
+    [CascadingParameter(Name = "TurnstileSiteKey")]
+    private string? TurnstileSiteKey { get; set; }
 
     private bool registrationEnabled = true;
 

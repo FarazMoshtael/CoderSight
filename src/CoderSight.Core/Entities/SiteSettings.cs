@@ -46,6 +46,10 @@ public class SiteSettings
     public string? SocialYouTube { get; set; }
     public string? SocialTelegram { get; set; }
 
+    // Cloudflare Turnstile
+    public string? TurnstileSiteKey { get; set; }
+    public string? TurnstileSecretKey { get; set; }
+
     // SMTP / Email
     public string? SmtpHost { get; set; }
     public int SmtpPort { get; set; } = 587;

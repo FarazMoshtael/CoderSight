@@ -263,6 +263,26 @@
             </div>
         </div>
 
+        <!-- Spam Protection -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Spam Protection (Cloudflare Turnstile)</h2>
+            <p class="text-xs text-gray-500 mb-4">
+                Add a Cloudflare Turnstile widget to all public forms (login, register, contact, newsletter) to block bots.
+                Get your keys from <a href="https://dash.cloudflare.com/?to=/:account/turnstile" target="_blank" class="text-brand-blue hover:underline">Cloudflare Dashboard</a>.
+                Leave both fields empty to disable.
+            </p>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Site Key</label>
+                    <input type="text" @bind="settings.TurnstileSiteKey" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono" placeholder="0x4AAAAAAA..." />
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Secret Key</label>
+                    <input type="password" @bind="settings.TurnstileSecretKey" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm font-mono" placeholder="0x4AAAAAAA..." />
+                </div>
+            </div>
+        </div>
+
         <!-- Email / SMTP Settings -->
         <div class="bg-white rounded-lg border border-gray-200 p-6">
             <h2 class="text-lg font-semibold text-gray-900 mb-4">Email / SMTP Settings</h2>
