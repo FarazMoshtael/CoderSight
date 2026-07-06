@@ -7,19 +7,23 @@
         {
             <p class="text-gray-400 mb-6 text-sm sm:text-base">@Data.Description</p>
         }
-        <form id="cs-newsletter-form" class="cs-newsletter-row" onsubmit="return csSubscribe(this)">
+        <form id="cs-newsletter-form" onsubmit="return csSubscribe(this)">
 
             <div style="position:absolute;left:-9999px;" aria-hidden="true"><textarea name="cs_hp" tabindex="-1" autocomplete="off" rows="1"></textarea></div>
-            <input type="email" name="email" required
-                   placeholder="@(Data?.Placeholder ?? "Enter your email")"
-                   class="px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
+            <div class="cs-newsletter-row">
+                <input type="email" name="email" required
+                       placeholder="@(Data?.Placeholder ?? "Enter your email")"
+                       class="px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-brand-blue" />
+                <button type="submit" class="bg-brand-blue text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity">
+                    @(Data?.ButtonText ?? "Subscribe")
+                </button>
+            </div>
             @if (!string.IsNullOrEmpty(TurnstileSiteKey))
             {
-                <div class="cf-turnstile" data-sitekey="@TurnstileSiteKey" data-theme="dark"></div>
+                <div class="flex justify-center mt-4">
+                    <div class="cf-turnstile" data-sitekey="@TurnstileSiteKey" data-theme="dark"></div>
+                </div>
             }
-            <button type="submit" class="bg-brand-blue text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity">
-                @(Data?.ButtonText ?? "Subscribe")
-            </button>
         </form>
         <p id="cs-newsletter-msg" class="mt-3 text-sm hidden"></p>
     </div>
