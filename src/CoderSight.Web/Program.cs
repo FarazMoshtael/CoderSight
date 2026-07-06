@@ -133,20 +133,20 @@ app.MapPost("/api/auth/login", async (
     ITurnstileService turnstile) =>
 {
     var form = await httpContext.Request.ReadFormAsync();
+    var returnUrl = form["returnUrl"].ToString();
+    var safeReturn = IsLocalUrl(returnUrl) ? returnUrl : null;
+
     if (!string.IsNullOrEmpty(form["cs_hp"].ToString()))
-        return Results.Redirect("/login?error=1");
+        return Results.Redirect(safeReturn is null ? "/admin/login?error=1" : $"/login?error=1&returnUrl={Uri.EscapeDataString(safeReturn)}");
 
     if (!await turnstile.VerifyAsync(form["cf-turnstile-response"], httpContext.Connection.RemoteIpAddress?.ToString()))
-        return Results.Redirect("/login?error=1");
+        return Results.Redirect(safeReturn is null ? "/admin/login?error=captcha" : $"/login?error=captcha&returnUrl={Uri.EscapeDataString(safeReturn)}");
 
     var email = form["email"].ToString().Trim();
     var password = form["password"].ToString();
-    var returnUrl = form["returnUrl"].ToString();
 
     if (email.Length > 256 || password.Length > 128)
-        return Results.Redirect("/login?error=1");
-
-    var safeReturn = IsLocalUrl(returnUrl) ? returnUrl : null;
+        return Results.Redirect(safeReturn is null ? "/admin/login?error=1" : $"/login?error=1&returnUrl={Uri.EscapeDataString(safeReturn)}");
 
     var user = await userManager.FindByEmailAsync(email);
     if (user is null)
@@ -245,7 +245,7 @@ app.MapPost("/api/auth/forgot-password", async (
         return Results.Redirect("/forgot-password?status=sent");
 
     if (!await turnstile.VerifyAsync(form["cf-turnstile-response"], httpContext.Connection.RemoteIpAddress?.ToString()))
-        return Results.Redirect("/forgot-password?status=sent");
+        return Results.Redirect("/forgot-password?status=captcha");
 
     var email = form["email"].ToString().Trim();
 
@@ -301,7 +301,7 @@ app.MapPost("/api/auth/reset-password", async (
         return Results.Redirect("/reset-password?status=invalid");
 
     if (!await turnstile.VerifyAsync(form["cf-turnstile-response"], httpContext.Connection.RemoteIpAddress?.ToString()))
-        return Results.Redirect("/reset-password?status=invalid");
+        return Results.Redirect("/reset-password?status=captcha");
 
     var email = form["email"].ToString().Trim();
     var token = form["token"].ToString();

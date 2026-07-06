@@ -9,7 +9,13 @@
             <p class="text-sm text-gray-500 mt-2">Sign in to the admin panel</p>
         </div>
 
-        @if (HasError)
+        @if (ErrorParam == "captcha")
+        {
+            <div class="mb-4 px-4 py-3 rounded-md text-sm bg-red-50 text-red-700">
+                Please complete the verification challenge.
+            </div>
+        }
+        else if (HasError)
         {
             <div class="mb-4 px-4 py-3 rounded-md text-sm bg-red-50 text-red-700">
                 Invalid email or password.

@@ -28,6 +28,12 @@ else
                 Account locked due to too many failed attempts. Please try again in 15 minutes.
             </div>
         }
+        else if (ErrorParam == "captcha")
+        {
+            <div class="mb-4 px-4 py-3 rounded-md text-sm bg-red-50 text-red-700">
+                Please complete the verification challenge.
+            </div>
+        }
         else if (HasError)
         {
             <div class="mb-4 px-4 py-3 rounded-md text-sm bg-red-50 text-red-700">
