@@ -134,8 +134,13 @@ function csRegInit() {
     pw.addEventListener('input', csRegCheck);
     pw2.addEventListener('input', csRegCheck);
 }
-document.addEventListener('DOMContentLoaded', csRegInit);
-document.addEventListener('enhancedload', csRegInit);
+function csRegDeferred() {
+    csRegInit();
+    setTimeout(csRegInit, 100);
+    setTimeout(csRegInit, 300);
+}
+document.addEventListener('DOMContentLoaded', csRegDeferred);
+document.addEventListener('enhancedload', csRegDeferred);
 
 function csCopyLink(btn) {
     navigator.clipboard.writeText(window.location.href).then(function() {
