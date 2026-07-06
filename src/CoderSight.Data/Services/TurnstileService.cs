@@ -1,5 +1,4 @@
 using System.Net.Http.Json;
-using CoderSight.Core.Entities;
 using CoderSight.Core.Services;
 using Microsoft.Extensions.Logging;
 
@@ -11,18 +10,12 @@ public class TurnstileService : ITurnstileService
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ILogger<TurnstileService> _logger;
 
-    private SiteSettings? _cachedSettings;
-
     public TurnstileService(ISiteSettingsService settingsService, IHttpClientFactory httpClientFactory, ILogger<TurnstileService> logger)
     {
         _settingsService = settingsService;
         _httpClientFactory = httpClientFactory;
         _logger = logger;
     }
-
-    public bool IsEnabled => !string.IsNullOrEmpty(SiteKey) && !string.IsNullOrEmpty(GetSettings().TurnstileSecretKey);
-
-    public string? SiteKey => GetSettings().TurnstileSiteKey;
 
     public async Task<bool> VerifyAsync(string? token, string? remoteIp)
     {
@@ -61,15 +54,6 @@ public class TurnstileService : ITurnstileService
             _logger.LogError(ex, "Turnstile verification request failed");
             return false;
         }
-    }
-
-    private SiteSettings GetSettings()
-    {
-        if (_cachedSettings is null)
-        {
-            _cachedSettings = _settingsService.GetAsync().GetAwaiter().GetResult();
-        }
-        return _cachedSettings;
     }
 
     private class TurnstileResponse

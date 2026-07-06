@@ -1,5 +1,4 @@
 @using CoderSight.Core.Blocks.Data
-@inject ITurnstileService TurnstileService
 
 <section class="py-16 px-4">
     <div class="max-w-2xl mx-auto">
@@ -56,9 +55,9 @@
                     <textarea rows="4" name="message" required class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue"></textarea>
                 </div>
             }
-            @if (TurnstileService.IsEnabled)
+            @if (!string.IsNullOrEmpty(TurnstileSiteKey))
             {
-                <div class="cf-turnstile" data-sitekey="@TurnstileService.SiteKey" data-theme="light"></div>
+                <div class="cf-turnstile" data-sitekey="@TurnstileSiteKey" data-theme="light"></div>
             }
             <div>
                 <button type="submit"
@@ -73,6 +72,9 @@
 
 @code {
     [Parameter] public ContactFormBlockData? Data { get; set; }
+
+    [CascadingParameter(Name = "TurnstileSiteKey")]
+    private string? TurnstileSiteKey { get; set; }
 
     private string GetFieldName(FormField field)
     {

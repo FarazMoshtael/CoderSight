@@ -1,6 +1,5 @@
 @using System.Globalization
 @inject ISiteSettingsService SettingsService
-@inject ITurnstileService TurnstileService
 
 <!DOCTYPE html>
 <html lang="@CultureInfo.CurrentCulture.TwoLetterISOLanguageName"
@@ -125,7 +124,8 @@
         _faviconUrl = settings?.FaviconUrl;
         _siteName = settings?.SiteName ?? "CoderSight";
         _metaDescription = settings?.DefaultMetaDescription;
-        _turnstileSiteKey = TurnstileService.IsEnabled ? TurnstileService.SiteKey : null;
+        _turnstileSiteKey = !string.IsNullOrEmpty(settings?.TurnstileSiteKey) && !string.IsNullOrEmpty(settings?.TurnstileSecretKey)
+            ? settings.TurnstileSiteKey : null;
 
         var ogImage = settings?.OgImageUrl ?? settings?.LogoUrl;
         if (!string.IsNullOrEmpty(ogImage))
