@@ -6,17 +6,41 @@
 @if (homePage is not null)
 {
     <PageTitle>@(homePage.MetaTitle ?? homePage.Title ?? _siteName)</PageTitle>
+    <HeadContent>
+        @if (!string.IsNullOrEmpty(_metaDescription))
+        {
+            <meta name="description" content="@_metaDescription" />
+            <meta property="og:description" content="@_metaDescription" />
+        }
+        <meta property="og:site_name" content="@_siteName" />
+        @if (!string.IsNullOrEmpty(_ogImageUrl))
+        {
+            <meta property="og:image" content="@_ogImageUrl" />
+            <meta property="og:image:width" content="1200" />
+            <meta property="og:image:height" content="630" />
+        }
+    </HeadContent>
     <BlockRenderer Blocks="homePage.Blocks" />
 }
 
 @code {
     private Page? homePage;
     private string _siteName = "CoderSight";
+    private string? _metaDescription;
+    private string? _ogImageUrl;
 
     protected override async Task OnInitializedAsync()
     {
         var settings = await SettingsService.GetAsync();
         _siteName = settings?.SiteName ?? "CoderSight";
+        _metaDescription = settings?.DefaultMetaDescription;
+
+        var ogImage = settings?.OgImageUrl ?? settings?.LogoUrl;
+        if (!string.IsNullOrEmpty(ogImage))
+        {
+            var baseUri = (!string.IsNullOrEmpty(settings?.SiteUrl) ? settings.SiteUrl : "").TrimEnd('/');
+            _ogImageUrl = ogImage.StartsWith("http") ? ogImage : $"{baseUri}{(ogImage.StartsWith('/') ? ogImage : "/" + ogImage)}";
+        }
 
         if (settings?.EnableMultilingual ?? true)
         {

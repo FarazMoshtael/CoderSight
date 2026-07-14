@@ -60,18 +60,6 @@
         <link rel="icon" type="image/svg+xml" href="uploads/favicon.svg" />
         <link rel="icon" type="image/png" href="favicon.png" />
     }
-    @if (!string.IsNullOrEmpty(_ogImageUrl))
-    {
-        <meta property="og:image" content="@_ogImageUrl" />
-        <meta property="og:image:width" content="1200" />
-        <meta property="og:image:height" content="630" />
-    }
-    @if (!string.IsNullOrEmpty(_metaDescription))
-    {
-        <meta name="description" content="@_metaDescription" />
-        <meta property="og:description" content="@_metaDescription" />
-    }
-    <meta property="og:site_name" content="@_siteName" />
     <HeadOutlet />
     @if (!string.IsNullOrEmpty(_gaId))
     {
@@ -112,8 +100,6 @@
 @code {
     private string? _gaId;
     private string? _faviconUrl;
-    private string? _ogImageUrl;
-    private string? _metaDescription;
     private string _siteName = "CoderSight";
     private string? _turnstileSiteKey;
 
@@ -123,20 +109,7 @@
         _gaId = settings?.GoogleAnalyticsId;
         _faviconUrl = settings?.FaviconUrl;
         _siteName = settings?.SiteName ?? "CoderSight";
-        _metaDescription = settings?.DefaultMetaDescription;
         _turnstileSiteKey = !string.IsNullOrEmpty(settings?.TurnstileSiteKey) && !string.IsNullOrEmpty(settings?.TurnstileSecretKey)
             ? settings.TurnstileSiteKey : null;
-
-        var ogImage = settings?.OgImageUrl ?? settings?.LogoUrl;
-        if (!string.IsNullOrEmpty(ogImage))
-        {
-            if (ogImage.StartsWith("http"))
-                _ogImageUrl = ogImage;
-            else
-            {
-                var baseUri = (!string.IsNullOrEmpty(settings?.SiteUrl) ? settings.SiteUrl : "").TrimEnd('/');
-                _ogImageUrl = baseUri + (ogImage.StartsWith('/') ? ogImage : "/" + ogImage);
-            }
-        }
     }
 }
