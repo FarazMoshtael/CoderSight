@@ -35,6 +35,11 @@ public class BlockStyleOptions
             $"border:{BorderWidth} solid {BorderColor}",
             $"max-width:{MaxWidth}"
         };
+        if (MaxWidth != "100%")
+        {
+            parts.Add("margin-left:auto");
+            parts.Add("margin-right:auto");
+        }
         if (!string.IsNullOrEmpty(TextAlign))
             parts.Add($"text-align:{TextAlign}");
         if (!string.IsNullOrEmpty(FontSize))

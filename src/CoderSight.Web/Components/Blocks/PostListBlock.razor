@@ -3,11 +3,31 @@
 @inject ISiteSettingsService SettingsService
 
 <section class="py-8 px-4">
-    <div class="max-w-6xl mx-auto" id="cs-postlist-@blockId" data-culture="@culture" data-page-size="@(Data?.PostsPerPage ?? 9)" data-multilingual="@isMultilingual.ToString().ToLower()">
+    <div class="max-w-6xl mx-auto" id="cs-postlist-@blockId" data-culture="@culture" data-page-size="@(Data?.PostsPerPage ?? 9)" data-multilingual="@isMultilingual.ToString().ToLower()" data-layout="@(Data?.Layout ?? "grid")">
+        @if (!string.IsNullOrEmpty(Data?.Title))
+        {
+            <h2 class="text-3xl font-bold text-brand-navy mb-8 text-center">@Data.Title</h2>
+        }
+
+        @if (Data?.ShowCategoryFilter == true && categories.Any())
+        {
+            <div class="cs-post-categories flex flex-wrap gap-2 mb-6 justify-center">
+                <button type="button" class="cs-cat-btn cs-cat-active px-4 py-1.5 rounded-full text-sm font-medium border transition-colors bg-brand-blue text-white border-brand-blue" data-slug="">
+                    All
+                </button>
+                @foreach (var cat in categories)
+                {
+                    <button type="button" class="cs-cat-btn px-4 py-1.5 rounded-full text-sm font-medium border transition-colors bg-white text-gray-600 border-gray-300 hover:border-brand-blue hover:text-brand-blue" data-slug="@cat.Slug">
+                        @cat.Name
+                    </button>
+                }
+            </div>
+        }
+
         @if (Data?.ShowSearch == true)
         {
             <div class="mb-8">
-                <div class="relative max-w-md">
+                <div class="relative max-w-md @(Data?.ShowCategoryFilter == true ? "" : "mx-auto")">
                     <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                     </svg>
@@ -18,33 +38,59 @@
             </div>
         }
 
-        <div class="cs-post-grid grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="cs-post-grid @(Data?.Layout == "list" ? "grid grid-cols-1 gap-4" : "grid grid-cols-1 md:grid-cols-3 gap-6")">
             @foreach (var post in posts)
             {
-                <a href="@(isMultilingual ? $"/{post.Page.Culture}/{post.Page.Slug}" : $"/{post.Page.Slug}")"
-                   class="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
-                    @if (!string.IsNullOrEmpty(post.FeaturedImageUrl))
-                    {
-                        <img src="@post.FeaturedImageUrl" alt="@post.Page.Title" class="w-full h-48 object-cover" />
-                    }
-                    else
-                    {
-                        <div class="w-full h-48 bg-gradient-to-br from-blue-50 to-brand-blue/10 flex items-center justify-center text-brand-blue/30 text-4xl font-bold">
-                            @post.Page.Title[..1]
+                if (Data?.Layout == "list")
+                {
+                    <a href="@(isMultilingual ? $"/{post.Page.Culture}/{post.Page.Slug}" : $"/{post.Page.Slug}")"
+                       class="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                        <div class="flex flex-col sm:flex-row">
+                            @if (!string.IsNullOrEmpty(post.FeaturedImageUrl))
+                            {
+                                <img src="@post.FeaturedImageUrl" alt="@post.Page.Title" class="w-full sm:w-48 h-40 sm:h-auto object-cover" />
+                            }
+                            <div class="p-5 flex-1">
+                                <p class="text-xs text-brand-blue font-medium mb-2">
+                                    @string.Join(", ", post.BlogPostCategories.Select(bc => bc.Category.Name))
+                                </p>
+                                <h3 class="font-semibold text-brand-navy mb-2">@post.Page.Title</h3>
+                                <p class="text-sm text-brand-slate line-clamp-2">@post.Excerpt</p>
+                                <div class="flex items-center gap-4 mt-3 text-xs text-brand-slate/70">
+                                    <span>@post.ReadTimeMinutes min read</span>
+                                    <span>@post.Page.PublishedAt?.ToString("MMM dd, yyyy")</span>
+                                </div>
+                            </div>
                         </div>
-                    }
-                    <div class="p-5">
-                        <p class="text-xs text-brand-blue font-medium mb-2">
-                            @string.Join(", ", post.BlogPostCategories.Select(bc => bc.Category.Name))
-                        </p>
-                        <h3 class="font-semibold text-brand-navy mb-2">@post.Page.Title</h3>
-                        <p class="text-sm text-brand-slate line-clamp-2">@post.Excerpt</p>
-                        <div class="flex items-center justify-between mt-4 text-xs text-brand-slate/70">
-                            <span>@post.ReadTimeMinutes min read</span>
-                            <span>@post.Page.PublishedAt?.ToString("MMM dd, yyyy")</span>
+                    </a>
+                }
+                else
+                {
+                    <a href="@(isMultilingual ? $"/{post.Page.Culture}/{post.Page.Slug}" : $"/{post.Page.Slug}")"
+                       class="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                        @if (!string.IsNullOrEmpty(post.FeaturedImageUrl))
+                        {
+                            <img src="@post.FeaturedImageUrl" alt="@post.Page.Title" class="w-full h-48 object-cover" />
+                        }
+                        else
+                        {
+                            <div class="w-full h-48 bg-gradient-to-br from-blue-50 to-brand-blue/10 flex items-center justify-center text-brand-blue/30 text-4xl font-bold">
+                                @post.Page.Title[..1]
+                            </div>
+                        }
+                        <div class="p-5">
+                            <p class="text-xs text-brand-blue font-medium mb-2">
+                                @string.Join(", ", post.BlogPostCategories.Select(bc => bc.Category.Name))
+                            </p>
+                            <h3 class="font-semibold text-brand-navy mb-2">@post.Page.Title</h3>
+                            <p class="text-sm text-brand-slate line-clamp-2">@post.Excerpt</p>
+                            <div class="flex items-center justify-between mt-4 text-xs text-brand-slate/70">
+                                <span>@post.ReadTimeMinutes min read</span>
+                                <span>@post.Page.PublishedAt?.ToString("MMM dd, yyyy")</span>
+                            </div>
                         </div>
-                    </div>
-                </a>
+                    </a>
+                }
             }
         </div>
 
@@ -90,12 +136,46 @@
             loadBtn.addEventListener('click', function() { loadMore(); });
         }
 
+        var catBtns = container.querySelectorAll('.cs-cat-btn');
+        catBtns.forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                catBtns.forEach(function(b) {
+                    b.classList.remove('cs-cat-active', 'bg-brand-blue', 'text-white', 'border-brand-blue');
+                    b.classList.add('bg-white', 'text-gray-600', 'border-gray-300');
+                });
+                btn.classList.add('cs-cat-active', 'bg-brand-blue', 'text-white', 'border-brand-blue');
+                btn.classList.remove('bg-white', 'text-gray-600', 'border-gray-300');
+                container._categorySlug = btn.getAttribute('data-slug') || '';
+                container._currentPage = 1;
+                reload();
+            });
+        });
+
         container._currentPage = 1;
         container._totalCount = @totalCount;
         container._searchQuery = '';
+        container._categorySlug = '';
     }
 
     function buildCard(p) {
+        var layout = container.getAttribute('data-layout');
+        if (layout === 'list') {
+            var listImg = p.featuredImageUrl
+                ? '<img src="' + esc(p.featuredImageUrl) + '" alt="' + esc(p.title) + '" class="w-full sm:w-48 h-40 sm:h-auto object-cover" />'
+                : '';
+            return '<a href="' + esc(p.url) + '" class="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">'
+                + '<div class="flex flex-col sm:flex-row">'
+                + listImg
+                + '<div class="p-5 flex-1">'
+                + '<p class="text-xs text-brand-blue font-medium mb-2">' + esc(p.categories) + '</p>'
+                + '<h3 class="font-semibold text-brand-navy mb-2">' + esc(p.title) + '</h3>'
+                + '<p class="text-sm text-brand-slate line-clamp-2">' + esc(p.excerpt) + '</p>'
+                + '<div class="flex items-center gap-4 mt-3 text-xs text-brand-slate/70">'
+                + '<span>' + p.readTimeMinutes + ' min read</span>'
+                + '<span>' + esc(p.publishedAt || '') + '</span>'
+                + '</div></div></div></a>';
+        }
+
         var imgHtml = p.featuredImageUrl
             ? '<img src="' + esc(p.featuredImageUrl) + '" alt="' + esc(p.title) + '" class="w-full h-48 object-cover" />'
             : '<div class="w-full h-48 bg-gradient-to-br from-blue-50 to-brand-blue/10 flex items-center justify-center text-brand-blue/30 text-4xl font-bold">' + esc(p.title.charAt(0)) + '</div>';
@@ -131,7 +211,6 @@
                 var d = document.createElement('div');
                 d.className = 'cs-post-loadmore text-center mt-8';
                 d.innerHTML = '<button class="cs-loadmore-btn px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">Load More</button>';
-                container.querySelector('.cs-post-grid').after(container.querySelector('.cs-post-loading'));
                 container.appendChild(d);
                 d.querySelector('.cs-loadmore-btn').addEventListener('click', function() { loadMore(); });
             }
@@ -159,20 +238,21 @@
         }
     }
 
-    function doSearch(query) {
-        container._searchQuery = query;
-        container._currentPage = 1;
-
+    function buildUrl(page) {
         var culture = container.getAttribute('data-culture');
         var pageSize = container.getAttribute('data-page-size');
-        var url = '/api/posts?culture=' + encodeURIComponent(culture) + '&page=1&pageSize=' + pageSize;
-        if (query) url += '&search=' + encodeURIComponent(query);
+        var url = '/api/posts?culture=' + encodeURIComponent(culture) + '&page=' + page + '&pageSize=' + pageSize;
+        if (container._searchQuery) url += '&search=' + encodeURIComponent(container._searchQuery);
+        if (container._categorySlug) url += '&category=' + encodeURIComponent(container._categorySlug);
+        return url;
+    }
 
+    function reload() {
         var grid = container.querySelector('.cs-post-grid');
         grid.innerHTML = '';
         showLoading(true);
 
-        fetch(url)
+        fetch(buildUrl(1))
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 showLoading(false);
@@ -184,16 +264,17 @@
             .catch(function() { showLoading(false); });
     }
 
-    function loadMore() {
-        var culture = container.getAttribute('data-culture');
-        var pageSize = parseInt(container.getAttribute('data-page-size'));
-        container._currentPage++;
-        var url = '/api/posts?culture=' + encodeURIComponent(culture) + '&page=' + container._currentPage + '&pageSize=' + pageSize;
-        if (container._searchQuery) url += '&search=' + encodeURIComponent(container._searchQuery);
+    function doSearch(query) {
+        container._searchQuery = query;
+        container._currentPage = 1;
+        reload();
+    }
 
+    function loadMore() {
+        container._currentPage++;
         showLoading(true);
 
-        fetch(url)
+        fetch(buildUrl(container._currentPage))
             .then(function(r) { return r.json(); })
             .then(function(data) {
                 showLoading(false);
@@ -217,6 +298,7 @@
     [Parameter] public PostListBlockData? Data { get; set; }
 
     private List<BlogPost> posts = [];
+    private List<Category> categories = [];
     private int totalCount;
     private string blockId = Guid.NewGuid().ToString("N")[..8];
     private string culture => CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
@@ -229,5 +311,10 @@
         var (result, count) = await BlogService.GetPostsAsync(culture, pageSize: Data?.PostsPerPage ?? 9);
         posts = result;
         totalCount = count;
+
+        if (Data?.ShowCategoryFilter == true)
+        {
+            categories = await BlogService.GetCategoriesAsync(culture);
+        }
     }
 }

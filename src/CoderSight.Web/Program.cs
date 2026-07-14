@@ -418,7 +418,7 @@ app.MapGet("/api/debug/test-notification", (INotificationQueue queue, ILogger<Pr
 });
 
 app.MapGet("/api/posts", async (
-    string? culture, int? page, int? pageSize, string? search,
+    string? culture, int? page, int? pageSize, string? search, string? category,
     IBlogService blogService, ISiteSettingsService settingsService) =>
 {
     var lang = culture ?? "en";
@@ -426,11 +426,12 @@ app.MapGet("/api/posts", async (
     var ps = Math.Clamp(pageSize ?? 9, 1, 50);
     var s = string.IsNullOrWhiteSpace(search) ? null : search.Trim();
     if (s is not null && s.Length > 200) s = s[..200];
+    var cat = string.IsNullOrWhiteSpace(category) ? null : category.Trim();
 
     var settings = await settingsService.GetAsync();
     var multilingual = settings?.EnableMultilingual ?? true;
 
-    var (posts, totalCount) = await blogService.GetPostsAsync(lang, p, ps, search: s);
+    var (posts, totalCount) = await blogService.GetPostsAsync(lang, p, ps, categorySlug: cat, search: s);
 
     var items = posts.Select(post => new
     {
@@ -444,6 +445,14 @@ app.MapGet("/api/posts", async (
     });
 
     return Results.Json(new { items, totalCount, page = p, pageSize = ps });
+});
+
+app.MapGet("/api/categories", async (string? culture, IBlogService blogService) =>
+{
+    var lang = culture ?? "en";
+    var categories = await blogService.GetCategoriesAsync(lang);
+    var items = categories.Select(c => new { slug = c.Slug, name = c.Name });
+    return Results.Json(new { items });
 });
 
 app.MapStaticAssets();
