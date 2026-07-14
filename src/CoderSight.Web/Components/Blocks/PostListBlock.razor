@@ -3,7 +3,7 @@
 @inject ISiteSettingsService SettingsService
 
 <section class="py-8 px-4">
-    <div class="max-w-6xl mx-auto" id="cs-postlist-@blockId" data-culture="@culture" data-page-size="@(Data?.PostsPerPage ?? 9)" data-multilingual="@isMultilingual.ToString().ToLower()" data-layout="@(Data?.Layout ?? "grid")">
+    <div class="max-w-6xl mx-auto" id="cs-postlist-@blockId" data-culture="@culture" data-page-size="@(Data?.PostsPerPage ?? 9)" data-multilingual="@isMultilingual.ToString().ToLower()" data-layout="@(Data?.Layout ?? "grid")" data-load-more="@((Data?.ShowLoadMore ?? true).ToString().ToLower())">
         @if (!string.IsNullOrEmpty(Data?.Title))
         {
             <h2 class="text-3xl font-bold text-brand-navy mb-8 text-center">@Data.Title</h2>
@@ -103,12 +103,24 @@
             <div class="inline-block w-6 h-6 border-2 border-gray-300 border-t-brand-blue rounded-full animate-spin"></div>
         </div>
 
-        @if (totalCount > posts.Count)
+        @if (totalCount > posts.Count && Data?.ShowLoadMore == true)
         {
             <div class="cs-post-loadmore text-center mt-8">
                 <button class="cs-loadmore-btn px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors">
                     Load More
                 </button>
+            </div>
+        }
+
+        @if (!string.IsNullOrEmpty(Data?.ViewAllUrl))
+        {
+            <div class="text-center mt-8">
+                <a href="@Data.ViewAllUrl" class="inline-flex items-center gap-2 px-6 py-2.5 bg-brand-blue text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity">
+                    @(Data.ViewAllText ?? "View all articles")
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+                    </svg>
+                </a>
             </div>
         }
     </div>
@@ -205,6 +217,7 @@
     }
 
     function updateLoadMore(loaded, total) {
+        if (container.getAttribute('data-load-more') !== 'true') return;
         var wrap = container.querySelector('.cs-post-loadmore');
         if (!wrap) {
             if (loaded < total) {

@@ -64,5 +64,8 @@ public class PostListBlockData : IBlockData
     public string Layout { get; set; } = "grid";
     public bool ShowCategoryFilter { get; set; } = true;
     public bool ShowSearch { get; set; } = true;
+    public bool ShowLoadMore { get; set; } = true;
+    public string? ViewAllUrl { get; set; }
+    public string? ViewAllText { get; set; }
     public string GetDisplayName() => Title ?? "Post list";
 }
