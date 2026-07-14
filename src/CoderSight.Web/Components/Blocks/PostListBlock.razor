@@ -38,13 +38,13 @@
             </div>
         }
 
-        <div class="cs-post-grid @(Data?.Layout == "list" ? "grid grid-cols-1 gap-4" : "grid grid-cols-1 md:grid-cols-3 gap-6")">
+        <div class="cs-post-grid @(Data?.Layout == "list" ? "flex flex-col gap-4" : "flex flex-wrap justify-center gap-6")">
             @foreach (var post in posts)
             {
                 if (Data?.Layout == "list")
                 {
                     <a href="@(isMultilingual ? $"/{post.Page.Culture}/{post.Page.Slug}" : $"/{post.Page.Slug}")"
-                       class="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                       class="block w-full bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                         <div class="flex flex-col sm:flex-row">
                             @if (!string.IsNullOrEmpty(post.FeaturedImageUrl))
                             {
@@ -67,7 +67,7 @@
                 else
                 {
                     <a href="@(isMultilingual ? $"/{post.Page.Culture}/{post.Page.Slug}" : $"/{post.Page.Slug}")"
-                       class="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
+                       class="w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)] bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">
                         @if (!string.IsNullOrEmpty(post.FeaturedImageUrl))
                         {
                             <img src="@post.FeaturedImageUrl" alt="@post.Page.Title" class="w-full h-48 object-cover" />
@@ -175,7 +175,7 @@
             var listImg = p.featuredImageUrl
                 ? '<img src="' + esc(p.featuredImageUrl) + '" alt="' + esc(p.title) + '" class="w-full sm:w-48 h-40 sm:h-auto object-cover" />'
                 : '';
-            return '<a href="' + esc(p.url) + '" class="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">'
+            return '<a href="' + esc(p.url) + '" class="block w-full bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">'
                 + '<div class="flex flex-col sm:flex-row">'
                 + listImg
                 + '<div class="p-5 flex-1">'
@@ -192,7 +192,7 @@
             ? '<img src="' + esc(p.featuredImageUrl) + '" alt="' + esc(p.title) + '" class="w-full h-48 object-cover" />'
             : '<div class="w-full h-48 bg-gradient-to-br from-blue-50 to-brand-blue/10 flex items-center justify-center text-brand-blue/30 text-4xl font-bold">' + esc(p.title.charAt(0)) + '</div>';
 
-        return '<a href="' + esc(p.url) + '" class="block bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">'
+        return '<a href="' + esc(p.url) + '" class="w-full sm:w-[calc(50%-0.75rem)] lg:w-[calc(33.333%-1rem)] bg-white border border-gray-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow">'
             + imgHtml
             + '<div class="p-5">'
             + '<p class="text-xs text-brand-blue font-medium mb-2">' + esc(p.categories) + '</p>'
