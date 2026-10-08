@@ -1,8 +1,8 @@
 @using CoderSight.Core.Blocks.Data
 
 @{
-    var heroBg = Data?.BackgroundColor ?? "#020817";
-    var heroStyle = $"background: linear-gradient(135deg, {heroBg}, #1A2233);";
+    var heroBg = ThemeColors.Resolve(Data?.BackgroundColor ?? ThemeColors.Ink);
+    var heroStyle = $"background: linear-gradient(135deg, {heroBg}, rgb(var(--cs-dark)));";
 }
 <section class="relative py-24 px-4 text-center text-white" style="@heroStyle">
     @if (!string.IsNullOrEmpty(Data?.BackgroundImageUrl))
@@ -17,7 +17,7 @@
         }
         @if (!string.IsNullOrEmpty(Data?.ButtonText))
         {
-            <a href="@Data?.ButtonLink" class="inline-block bg-brand-blue text-white px-6 sm:px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-colors">
+            <a href="@Data?.ButtonLink" class="inline-block bg-brand-blue text-brand-on-blue px-6 sm:px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-colors">
                 @Data.ButtonText
             </a>
         }

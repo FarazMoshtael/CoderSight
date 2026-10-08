@@ -11,10 +11,10 @@
             {
                 @foreach (var plan in Data.Plans)
                 {
-                    <div class="bg-white rounded-xl p-8 @(plan.IsHighlighted ? "ring-2 ring-indigo-600 shadow-lg" : "border border-gray-200")">
+                    <div class="bg-white rounded-xl p-8 @(plan.IsHighlighted ? "ring-2 ring-brand-blue shadow-lg" : "border border-gray-200")">
                         @if (plan.IsHighlighted)
                         {
-                            <span class="text-xs bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full font-medium">Most Popular</span>
+                            <span class="text-xs bg-brand-blue/10 text-brand-blue px-3 py-1 rounded-full font-medium">Most Popular</span>
                         }
                         <h3 class="text-xl font-bold text-gray-900 mt-4">@plan.Name</h3>
                         <p class="text-sm text-gray-500 mt-1">@plan.Description</p>
@@ -30,7 +30,7 @@
                                 </li>
                             }
                         </ul>
-                        <a href="@plan.ButtonLink" class="block text-center py-2.5 rounded-lg font-medium @(plan.IsHighlighted ? "bg-indigo-600 text-white hover:bg-indigo-700" : "border border-gray-300 text-gray-700 hover:bg-gray-50") transition-colors">
+                        <a href="@plan.ButtonLink" class="block text-center py-2.5 rounded-lg font-medium @(plan.IsHighlighted ? "bg-brand-blue text-brand-on-blue hover:bg-brand-blue-hover" : "border border-gray-300 text-gray-700 hover:bg-gray-50") transition-colors">
                             @plan.ButtonText
                         </a>
                     </div>

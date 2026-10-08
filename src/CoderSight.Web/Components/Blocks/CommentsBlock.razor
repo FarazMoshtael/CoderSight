@@ -12,44 +12,42 @@
 
 <section class="py-12 px-4">
     <div class="max-w-3xl mx-auto">
-        <h2 class="text-2xl font-bold mb-6" style="color: #020817;">
+        <h2 class="text-2xl font-bold mb-6 text-brand-navy">
             Comments
             @if (comments.Any())
             {
-                <span class="text-base font-normal" style="color: #64748B;"> (@comments.Count)</span>
+                <span class="text-base font-normal text-brand-slate"> (@comments.Count)</span>
             }
         </h2>
 
         <!-- Comment form -->
         @if (isAuthenticated)
         {
-            <div class="mb-8 p-5 rounded-xl border" style="border-color: #64748B30; background: #FFFFFF;">
+            <div class="mb-8 p-5 rounded-xl border border-brand-slate/20 bg-white">
                 @if (submitted)
                 {
                     <div class="text-center py-4">
-                        <div class="text-lg font-semibold mb-1" style="color: #020817;">Thank you!</div>
-                        <p class="text-sm" style="color: #64748B;">Your comment has been submitted and will appear after admin approval.</p>
+                        <div class="text-lg font-semibold mb-1 text-brand-navy">Thank you!</div>
+                        <p class="text-sm text-brand-slate">Your comment has been submitted and will appear after admin approval.</p>
                     </div>
                 }
                 else
                 {
                     <div class="flex items-center gap-2 mb-3">
-                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background: #020817; color: #2563EB;">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-brand-navy text-brand-blue">
                             @(userName?.Length > 0 ? userName[0].ToString().ToUpper() : "?")
                         </div>
-                        <span class="text-sm font-medium" style="color: #020817;">@userName</span>
+                        <span class="text-sm font-medium text-brand-navy">@userName</span>
                     </div>
                     <textarea @bind="newComment" rows="3" maxlength="2000" placeholder="Write a comment..."
-                              class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 resize-none"
-                              style="border-color: #64748B40; color: #020817;" />
+                              class="w-full border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 resize-none border-brand-slate/25 text-brand-navy" />
                     @if (!string.IsNullOrEmpty(errorMessage))
                     {
                         <p class="text-sm text-red-600 mt-1">@errorMessage</p>
                     }
                     <div class="flex justify-end mt-3">
                         <button @onclick="SubmitComment" disabled="@submitting"
-                                class="text-sm font-semibold text-white px-5 py-2 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50"
-                                style="background-color: #2563EB;">
+                                class="text-sm font-semibold text-brand-on-blue px-5 py-2 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 bg-brand-blue">
                             @(submitting ? "Posting..." : "Post Comment")
                         </button>
                     </div>
@@ -58,16 +56,14 @@
         }
         else
         {
-            <div class="mb-8 p-5 rounded-xl border text-center" style="border-color: #64748B30; background: #FFFFFF;">
-                <p class="text-sm mb-3" style="color: #64748B;">Sign in to leave a comment.</p>
+            <div class="mb-8 p-5 rounded-xl border text-center border-brand-slate/20 bg-white">
+                <p class="text-sm mb-3 text-brand-slate">Sign in to leave a comment.</p>
                 <a href="/login?returnUrl=@Uri.EscapeDataString(Nav.Uri)"
-                   class="inline-block text-sm font-semibold text-white px-5 py-2 rounded-lg hover:opacity-90 transition-opacity"
-                   style="background-color: #2563EB;">
+                   class="inline-block text-sm font-semibold text-brand-on-blue px-5 py-2 rounded-lg hover:opacity-90 transition-opacity bg-brand-blue">
                     Sign In
                 </a>
                 <a href="/register?returnUrl=@Uri.EscapeDataString(Nav.Uri)"
-                   class="inline-block text-sm font-semibold px-5 py-2 rounded-lg border hover:opacity-90 transition-opacity ms-2"
-                   style="color: #020817; border-color: #64748B40;">
+                   class="inline-block text-sm font-semibold px-5 py-2 rounded-lg border hover:opacity-90 transition-opacity ms-2 text-brand-navy border-brand-slate/25">
                     Create Account
                 </a>
             </div>
@@ -79,24 +75,24 @@
             <div class="space-y-4">
                 @foreach (var comment in comments)
                 {
-                    <div class="p-4 rounded-lg border" style="border-color: #64748B20; background: #FFFFFF;">
+                    <div class="p-4 rounded-lg border border-brand-slate/10 bg-white">
                         <div class="flex items-center gap-2 mb-2">
-                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold" style="background: #020817; color: #2563EB;">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-brand-navy text-brand-blue">
                                 @(comment.UserDisplayName.Length > 0 ? comment.UserDisplayName[0].ToString().ToUpper() : "?")
                             </div>
                             <div>
-                                <span class="text-sm font-semibold" style="color: #020817;">@comment.UserDisplayName</span>
-                                <span class="text-xs ms-2" style="color: #64748B;">@comment.CreatedAt.ToString("MMM d, yyyy")</span>
+                                <span class="text-sm font-semibold text-brand-navy">@comment.UserDisplayName</span>
+                                <span class="text-xs ms-2 text-brand-slate">@comment.CreatedAt.ToString("MMM d, yyyy")</span>
                             </div>
                         </div>
-                        <p class="text-sm leading-relaxed" style="color: #1A2233;">@comment.Body</p>
+                        <p class="text-sm leading-relaxed text-brand-dark">@comment.Body</p>
                     </div>
                 }
             </div>
         }
         else if (!submitted)
         {
-            <div class="text-center py-8" style="color: #64748B;">
+            <div class="text-center py-8 text-brand-slate">
                 <p class="text-sm">No comments yet. Be the first to share your thoughts!</p>
             </div>
         }

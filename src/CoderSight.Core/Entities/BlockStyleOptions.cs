@@ -1,3 +1,5 @@
+using CoderSight.Core.Theming;
+
 namespace CoderSight.Core.Entities;
 
 public class BlockStyleOptions
@@ -26,15 +28,17 @@ public class BlockStyleOptions
     {
         var parts = new List<string>
         {
-            $"background-color:{BackgroundColor}",
-            $"color:{TextColor}",
+            $"background-color:{ThemeColors.Resolve(BackgroundColor)}",
             $"padding:{PaddingTop} {PaddingRight} {PaddingBottom} {PaddingLeft}",
             $"margin-top:{MarginTop}",
             $"margin-bottom:{MarginBottom}",
             $"border-radius:{BorderRadius}",
-            $"border:{BorderWidth} solid {BorderColor}",
+            $"border:{BorderWidth} solid {ThemeColors.Resolve(BorderColor)}",
             $"max-width:{MaxWidth}"
         };
+        // The default text colour is left out so blocks inherit the brand's ink colour from the page.
+        if (!string.IsNullOrWhiteSpace(TextColor) && !TextColor.Equals(ThemeColors.Ink, StringComparison.OrdinalIgnoreCase))
+            parts.Add($"color:{ThemeColors.Resolve(TextColor)}");
         if (MaxWidth != "100%")
         {
             parts.Add("margin-left:auto");

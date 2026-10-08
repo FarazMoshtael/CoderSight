@@ -2,6 +2,10 @@
     font-family: 'Sora', sans-serif;
 }
 
+.font-brand {
+    font-family: var(--cs-font-body, 'Sora'), sans-serif;
+}
+
 .font-vazirmatn {
     font-family: 'Vazirmatn', sans-serif;
 }

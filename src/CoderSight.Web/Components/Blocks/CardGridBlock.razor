@@ -18,7 +18,7 @@
                         }
                         else if (!string.IsNullOrEmpty(card.Icon))
                         {
-                            <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center mb-4 text-xl font-bold">
+                            <div class="w-12 h-12 bg-brand-blue/10 text-brand-blue rounded-lg flex items-center justify-center mb-4 text-xl font-bold">
                                 @card.Icon[..1].ToUpper()
                             </div>
                         }
@@ -29,7 +29,7 @@
                         }
                         @if (!string.IsNullOrEmpty(card.LinkText))
                         {
-                            <a href="@card.LinkUrl" class="text-indigo-600 text-sm font-medium hover:text-indigo-700">@card.LinkText →</a>
+                            <a href="@card.LinkUrl" class="text-brand-blue text-sm font-medium hover:text-brand-blue-hover">@card.LinkText →</a>
                         }
                     </div>
                 }

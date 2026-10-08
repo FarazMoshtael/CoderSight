@@ -18,6 +18,15 @@ public class SiteSettings
     public bool EnableBlogComments { get; set; } = true;
     public bool EnableUserBlogSubmissions { get; set; } = false;
 
+    // Brand theme (rendered as --cs-* CSS variables used by blocks)
+    public string ThemePrimaryColor { get; set; } = "#2563EB";
+    public string ThemePrimaryHoverColor { get; set; } = "#1D4ED8";
+    public string ThemeOnPrimaryColor { get; set; } = "#FFFFFF";
+    public string ThemeInkColor { get; set; } = "#020817";
+    public string ThemeDarkColor { get; set; } = "#1A2233";
+    public string ThemeMutedColor { get; set; } = "#64748B";
+    public string ThemeFontFamily { get; set; } = "Sora";
+
     // Site background
     public string SiteBackgroundColor { get; set; } = "#F9FAFB";
 
