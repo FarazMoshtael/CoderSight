@@ -37,6 +37,19 @@ builder.Services.ConfigureApplicationCookie(options =>
 {
     options.LoginPath = "/login";
     options.AccessDeniedPath = "/admin/access-denied";
+
+    // Admin pages sign in through /admin/login, which works even when public
+    // registration (and with it the public /login page) is disabled.
+    options.Events.OnRedirectToLogin = context =>
+    {
+        if (context.Request.Path.StartsWithSegments("/admin"))
+        {
+            var returnUrl = context.Request.PathBase + context.Request.Path + context.Request.QueryString;
+            context.RedirectUri = $"/admin/login?returnUrl={Uri.EscapeDataString(returnUrl)}";
+        }
+        context.Response.Redirect(context.RedirectUri);
+        return Task.CompletedTask;
+    };
 });
 
 builder.Services.AddRateLimiter(options =>
@@ -135,33 +148,40 @@ app.MapPost("/api/auth/login", async (
     var form = await httpContext.Request.ReadFormAsync();
     var returnUrl = form["returnUrl"].ToString();
     var safeReturn = IsLocalUrl(returnUrl) ? returnUrl : null;
+    // Errors go back to the form that posted. Only the public form sends
+    // source=public; everything else returns to /admin/login, which stays usable
+    // when user registration (and with it the public /login page) is disabled.
+    var fromAdmin = form["source"].ToString() != "public";
+    string ErrorRedirect(string error)
+    {
+        var page = fromAdmin ? "/admin/login" : "/login";
+        return safeReturn is null ? $"{page}?error={error}" : $"{page}?error={error}&returnUrl={Uri.EscapeDataString(safeReturn)}";
+    }
 
     if (!string.IsNullOrEmpty(form["cs_hp"].ToString()))
-        return Results.Redirect(safeReturn is null ? "/admin/login?error=1" : $"/login?error=1&returnUrl={Uri.EscapeDataString(safeReturn)}");
+        return Results.Redirect(ErrorRedirect("1"));
 
     if (!await turnstile.VerifyAsync(form["cf-turnstile-response"], httpContext.Connection.RemoteIpAddress?.ToString()))
-        return Results.Redirect(safeReturn is null ? "/admin/login?error=captcha" : $"/login?error=captcha&returnUrl={Uri.EscapeDataString(safeReturn)}");
+        return Results.Redirect(ErrorRedirect("captcha"));
 
     var email = form["email"].ToString().Trim();
     var password = form["password"].ToString();
 
     if (email.Length > 256 || password.Length > 128)
-        return Results.Redirect(safeReturn is null ? "/admin/login?error=1" : $"/login?error=1&returnUrl={Uri.EscapeDataString(safeReturn)}");
+        return Results.Redirect(ErrorRedirect("1"));
 
     var user = await userManager.FindByEmailAsync(email);
     if (user is null)
     {
-        var errorRedirect = safeReturn is null ? "/admin/login?error=1" : $"/login?error=1&returnUrl={Uri.EscapeDataString(safeReturn)}";
-        return Results.Redirect(errorRedirect);
+        return Results.Redirect(ErrorRedirect("1"));
     }
 
     var result = await signInManager.PasswordSignInAsync(user, password, isPersistent: true, lockoutOnFailure: true);
     if (result.IsLockedOut)
-        return Results.Redirect(safeReturn is null ? "/login?error=locked" : $"/login?error=locked&returnUrl={Uri.EscapeDataString(safeReturn)}");
+        return Results.Redirect(ErrorRedirect("locked"));
     if (!result.Succeeded)
     {
-        var errorRedirect = safeReturn is null ? "/admin/login?error=1" : $"/login?error=1&returnUrl={Uri.EscapeDataString(safeReturn)}";
-        return Results.Redirect(errorRedirect);
+        return Results.Redirect(ErrorRedirect("1"));
     }
 
     var isAdmin = await userManager.IsInRoleAsync(user, "Admin") || await userManager.IsInRoleAsync(user, "Editor");

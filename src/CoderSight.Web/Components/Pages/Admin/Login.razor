@@ -9,7 +9,13 @@
             <p class="text-sm text-gray-500 mt-2">Sign in to the admin panel</p>
         </div>
 
-        @if (ErrorParam == "captcha")
+        @if (ErrorParam == "locked")
+        {
+            <div class="mb-4 px-4 py-3 rounded-md text-sm bg-red-50 text-red-700">
+                Account locked due to too many failed attempts. Please try again in 15 minutes.
+            </div>
+        }
+        else if (ErrorParam == "captcha")
         {
             <div class="mb-4 px-4 py-3 rounded-md text-sm bg-red-50 text-red-700">
                 Please complete the verification challenge.
@@ -23,6 +29,8 @@
         }
 
         <form method="post" action="/api/auth/login" data-enhance="false">
+            <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+            <input type="hidden" name="source" value="admin" />
 
             <div style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);" aria-hidden="true"><textarea name="cs_hp" tabindex="-1" autocomplete="off" rows="1"></textarea></div>
             <div class="space-y-4">
@@ -63,6 +71,9 @@
 
     [SupplyParameterFromQuery(Name = "error")]
     public string? ErrorParam { get; set; }
+
+    [SupplyParameterFromQuery(Name = "returnUrl")]
+    public string? ReturnUrl { get; set; }
 
     private bool HasError => ErrorParam == "1";
 }
