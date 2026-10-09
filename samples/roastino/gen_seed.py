@@ -259,6 +259,8 @@ UPDATE SiteSettings SET
     FooterText = N'© ۱۴۰۵ رستینو · کافه‌بار و فروشگاه قهوه',
     SocialInstagram = @InstagramUrl,
     SiteBackgroundColor = '{CREAM}',
+    -- Empty NavStyles/FooterStyles make the navbar and footer use the colours below.
+    NavStyles = N'', FooterStyles = N'',
     NavBackgroundColor = '{CREAM}', NavTextColor = '{INK}', NavBorderColor = '{BORDER}',
     NavLogoTextColor = '{INK}', NavHoverColor = '{RED}',
     NavHeight = '4.5rem', NavLogoHeight = '3rem', NavLogoFontSize = '1.6rem',
