@@ -1,10 +1,13 @@
 @using CoderSight.Core.Blocks.Data
 
-<section class="py-8 px-4">
-    <div class="max-w-6xl mx-auto rounded-lg overflow-hidden">
-        <iframe src="@Data?.EmbedUrl" width="100%" height="@(Data?.Height ?? 400)" style="border:0;" allowfullscreen="" loading="lazy"></iframe>
-    </div>
-</section>
+@if (!string.IsNullOrWhiteSpace(Data?.EmbedUrl))
+{
+    <section class="py-8 px-4">
+        <div class="max-w-6xl mx-auto rounded-brand overflow-hidden border border-brand-border">
+            <iframe src="@Data.EmbedUrl" width="100%" height="@Data.Height" style="border:0;display:block;" allowfullscreen="" loading="lazy" title="Map"></iframe>
+        </div>
+    </section>
+}
 
 @code {
     [Parameter] public MapEmbedBlockData? Data { get; set; }

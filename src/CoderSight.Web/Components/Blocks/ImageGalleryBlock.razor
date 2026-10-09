@@ -6,8 +6,8 @@
         {
             @foreach (var image in Data.Images)
             {
-                <div class="overflow-hidden rounded-lg">
-                    <img src="@image.ImageUrl" alt="@image.AltText" class="w-full h-48 object-cover hover:scale-105 transition-transform duration-300" />
+                <div class="overflow-hidden rounded-brand">
+                    <img src="@image.ImageUrl" alt="@image.AltText" class="w-full h-56 md:h-72 object-cover rounded-brand hover:scale-105 transition-transform duration-300" />
                     @if (!string.IsNullOrEmpty(image.Caption))
                     {
                         <p class="text-sm text-gray-500 mt-2 px-1">@image.Caption</p>

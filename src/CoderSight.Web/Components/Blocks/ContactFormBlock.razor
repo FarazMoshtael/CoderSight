@@ -1,37 +1,37 @@
 @using CoderSight.Core.Blocks.Data
 
 <section class="py-16 px-4">
-    <div class="max-w-2xl mx-auto">
+    <div class="max-w-2xl mx-auto bg-brand-surface border border-brand-border rounded-brand p-6 sm:p-9">
         @if (!string.IsNullOrEmpty(Data?.Title))
         {
-            <h2 class="text-2xl font-bold text-gray-900 mb-2">@Data.Title</h2>
+            <h2 class="text-2xl font-bold text-brand-navy mb-2">@Data.Title</h2>
         }
         @if (!string.IsNullOrEmpty(Data?.Description))
         {
-            <p class="text-gray-600 mb-8">@Data.Description</p>
+            <p class="text-brand-slate mb-8">@Data.Description</p>
         }
         <form onsubmit="return csContactSubmit(this)" class="space-y-4">
 
-            <div style="position:absolute;left:-9999px;" aria-hidden="true"><textarea name="cs_hp" tabindex="-1" autocomplete="off" rows="1"></textarea></div>
+            <div style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);" aria-hidden="true"><textarea name="cs_hp" tabindex="-1" autocomplete="off" rows="1"></textarea></div>
             @if (Data?.Fields is not null && Data.Fields.Any())
             {
                 @foreach (var field in Data.Fields)
                 {
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            @field.Label @(field.Required ? "*" : "")
+                        <label for="@FieldId(field)" class="block text-sm font-medium text-brand-navy mb-1">
+                            @field.Label @if (field.Required) { <span class="text-brand-blue" aria-hidden="true">*</span> }
                         </label>
                         @if (field.Type == "textarea")
                         {
-                            <textarea rows="4" name="@GetFieldName(field)" placeholder="@field.Placeholder"
-                                      @(field.Required ? "required" : "")
-                                      class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue"></textarea>
+                            <textarea id="@FieldId(field)" rows="5" name="@GetFieldName(field)" placeholder="@field.Placeholder"
+                                      required="@field.Required"
+                                      class="w-full bg-white/70 border border-brand-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue"></textarea>
                         }
                         else
                         {
-                            <input type="@field.Type" name="@GetFieldName(field)" placeholder="@field.Placeholder"
-                                   @(field.Required ? "required" : "")
-                                   class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue" />
+                            <input id="@FieldId(field)" type="@field.Type" name="@GetFieldName(field)" placeholder="@field.Placeholder"
+                                   required="@field.Required"
+                                   class="w-full bg-white/70 border border-brand-border rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-blue focus:border-brand-blue" />
                         }
                     </div>
                 }
@@ -61,7 +61,7 @@
             }
             <div>
                 <button type="submit"
-                        class="w-full sm:w-auto bg-brand-blue text-white px-6 py-2.5 rounded-md font-medium hover:opacity-90 transition-opacity">
+                        class="w-full sm:w-auto bg-brand-blue text-brand-on-blue px-8 py-3 rounded-lg font-semibold hover:bg-brand-blue-hover transition-colors">
                     @(Data?.SubmitButtonText ?? "Send message")
                 </button>
             </div>
@@ -76,8 +76,14 @@
     [CascadingParameter(Name = "TurnstileSiteKey")]
     private string? TurnstileSiteKey { get; set; }
 
+    private readonly string _formId = Guid.NewGuid().ToString("N")[..8];
+
+    private string FieldId(FormField field) => $"cf-{_formId}-{GetFieldName(field)}";
+
     private string GetFieldName(FormField field)
     {
+        if (!string.IsNullOrWhiteSpace(field.Name)) return field.Name.Trim().ToLowerInvariant();
+        if (field.Type == "email") return "email";
         var label = field.Label.ToLowerInvariant();
         if (label.Contains("email")) return "email";
         if (label.Contains("name")) return "name";

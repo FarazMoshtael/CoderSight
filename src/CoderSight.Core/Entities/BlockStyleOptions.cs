@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 using System.Text.Json;
+=======
+using CoderSight.Core.Theming;
+>>>>>>> claude/project-thread-sqeesh
 
 namespace CoderSight.Core.Entities;
 
@@ -54,19 +58,25 @@ public class BlockStyleOptions
     {
         var parts = new List<string>
         {
-            $"background-color:{BackgroundColor}",
-            $"color:{TextColor}",
+            $"background-color:{ThemeColors.Resolve(BackgroundColor)}",
             $"padding:{PaddingTop} {PaddingRight} {PaddingBottom} {PaddingLeft}",
             $"margin-top:{MarginTop}",
             $"margin-bottom:{MarginBottom}",
             $"border-radius:{BorderRadius}",
+<<<<<<< HEAD
             // Emitted per-property (rather than the `border` shorthand) so per-side
             // widths such as "0 0 1px 0" work — used by the navbar's bottom rule.
             $"border-width:{BorderWidth}",
             "border-style:solid",
             $"border-color:{BorderColor}",
+=======
+            $"border:{BorderWidth} solid {ThemeColors.Resolve(BorderColor)}",
+>>>>>>> claude/project-thread-sqeesh
             $"max-width:{MaxWidth}"
         };
+        // The default text colour is left out so blocks inherit the brand's ink colour from the page.
+        if (!string.IsNullOrWhiteSpace(TextColor) && !TextColor.Equals(ThemeColors.Ink, StringComparison.OrdinalIgnoreCase))
+            parts.Add($"color:{ThemeColors.Resolve(TextColor)}");
         if (MaxWidth != "100%")
         {
             parts.Add("margin-left:auto");

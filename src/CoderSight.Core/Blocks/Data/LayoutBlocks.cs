@@ -27,6 +27,9 @@ public class CardGridBlockData : IBlockData
     public string? SectionTitle { get; set; }
     public List<CardItem> Cards { get; set; } = [];
     public int Columns { get; set; } = 3;
+    /// <summary>stacked: icon above the text. inline: icon beside the text, for short facts like an address.</summary>
+    [BlockOptions("stacked", "inline")]
+    public string Layout { get; set; } = "stacked";
     public string GetDisplayName() => SectionTitle ?? "Card grid";
 }
 
@@ -68,6 +71,9 @@ public class ProductShowcaseBlockData : IBlockData
     public string? SectionSubtitle { get; set; }
     public List<ProductCard> Products { get; set; } = [];
     public int Columns { get; set; } = 3;
+    /// <summary>cards: image cards. list: compact name, description and price rows, as on a menu.</summary>
+    [BlockOptions("cards", "list")]
+    public string Layout { get; set; } = "cards";
     public string Animation { get; set; } = "fade-up";
     public string GetDisplayName() => SectionTitle ?? $"Products ({Products.Count})";
 }

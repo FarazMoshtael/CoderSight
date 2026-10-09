@@ -121,6 +121,39 @@
             </div>
         </div>
 
+        <!-- Brand Theme -->
+        <div class="bg-white rounded-lg border border-gray-200 p-6">
+            <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-1">Brand Theme</h2>
+            <p class="text-xs text-gray-400 mb-4">Colours and font used by every block. Changing them restyles all pages.</p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                @ColorField("Primary", settings.ThemePrimaryColor, v => settings.ThemePrimaryColor = v)
+                @ColorField("Primary Hover", settings.ThemePrimaryHoverColor, v => settings.ThemePrimaryHoverColor = v)
+                @ColorField("Text on Primary", settings.ThemeOnPrimaryColor, v => settings.ThemeOnPrimaryColor = v)
+                @ColorField("Ink (headings, dark sections)", settings.ThemeInkColor, v => settings.ThemeInkColor = v)
+                @ColorField("Dark Accent", settings.ThemeDarkColor, v => settings.ThemeDarkColor = v)
+                @ColorField("Muted Text", settings.ThemeMutedColor, v => settings.ThemeMutedColor = v)
+                @ColorField("Card Surface", settings.ThemeSurfaceColor, v => settings.ThemeSurfaceColor = v)
+                @ColorField("Card Border", settings.ThemeBorderColor, v => settings.ThemeBorderColor = v)
+            </div>
+            <div class="mt-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Font</label>
+                <input type="text" @bind="settings.ThemeFontFamily" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Sora" />
+                <p class="text-xs text-gray-400 mt-1">A Google Fonts family name with weights 300 to 700, for example Inter. Persian pages keep Vazirmatn.</p>
+            </div>
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Heading Font</label>
+                    <input type="text" @bind="settings.ThemeHeadingFontFamily" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Same as the body font" />
+                    <p class="text-xs text-gray-400 mt-1">Optional Google Fonts family for h1 to h3, on every language. Leave empty to use the body font.</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Card Corner Radius</label>
+                    <input type="text" @bind="settings.ThemeRadius" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="0.75rem" />
+                    <p class="text-xs text-gray-400 mt-1">A CSS length such as 0.75rem or 12px.</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Site Background -->
         <div class="bg-white rounded-lg border border-gray-200 p-6">
             <h2 class="text-sm font-medium text-gray-500 uppercase tracking-wider mb-4">Site Background</h2>

@@ -1,36 +1,41 @@
 @using CoderSight.Core.Blocks.Data
 
+@{
+    var inline = Data?.Layout == "inline";
+}
 <section class="py-16 px-4">
     <div class="max-w-6xl mx-auto">
         @if (!string.IsNullOrEmpty(Data?.SectionTitle))
         {
-            <h2 class="text-3xl font-bold text-center text-gray-900 mb-12">@Data.SectionTitle</h2>
+            <h2 class="text-3xl font-bold text-center text-brand-navy mb-12">@Data.SectionTitle</h2>
         }
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-@(Data?.Columns ?? 3) gap-6">
+        <div class="grid grid-cols-1 @(Data?.Columns > 1 ? "sm:grid-cols-2" : "") md:grid-cols-@(Data?.Columns ?? 3) gap-6">
             @if (Data?.Cards is not null)
             {
                 @foreach (var card in Data.Cards)
                 {
-                    <div class="bg-white border border-gray-200 rounded-xl p-6 hover:shadow-md transition-shadow">
+                    <div class="bg-brand-surface border border-brand-border rounded-brand p-6 hover:shadow-md transition-shadow @(inline ? "flex items-start gap-4" : "")">
                         @if (!string.IsNullOrEmpty(card.ImageUrl))
                         {
-                            <img src="@card.ImageUrl" alt="@card.Title" class="w-full h-40 object-cover rounded-lg mb-4" />
+                            <img src="@card.ImageUrl" alt="@card.Title" class="@(inline ? "w-16 h-16 shrink-0" : "w-full h-40 mb-4") object-cover rounded-lg" />
                         }
                         else if (!string.IsNullOrEmpty(card.Icon))
                         {
-                            <div class="w-12 h-12 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center mb-4 text-xl font-bold">
-                                @card.Icon[..1].ToUpper()
+                            <div class="w-12 h-12 shrink-0 bg-brand-blue/10 text-brand-blue rounded-full flex items-center justify-center text-xl @(inline ? "" : "mb-4")">
+                                <CsIcon Name="@card.Icon" />
                             </div>
                         }
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">@card.Title</h3>
-                        @if (!string.IsNullOrEmpty(card.Description))
-                        {
-                            <p class="text-gray-600 text-sm mb-4">@card.Description</p>
-                        }
-                        @if (!string.IsNullOrEmpty(card.LinkText))
-                        {
-                            <a href="@card.LinkUrl" class="text-indigo-600 text-sm font-medium hover:text-indigo-700">@card.LinkText →</a>
-                        }
+                        <div class="min-w-0">
+                            <h3 class="text-lg font-semibold text-brand-navy mb-2">@card.Title</h3>
+                            @if (!string.IsNullOrEmpty(card.Description))
+                            {
+                                <p class="text-brand-slate text-sm mb-4 whitespace-pre-line">@card.Description</p>
+                            }
+                            @if (!string.IsNullOrEmpty(card.LinkText))
+                            {
+                                <a href="@card.LinkUrl" class="text-brand-blue text-sm font-medium hover:text-brand-blue-hover">@card.LinkText <span class="cs-arrow" aria-hidden="true">→</span></a>
+                            }
+                        </div>
                     </div>
                 }
             }

@@ -4,6 +4,7 @@ using CoderSight.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CoderSight.Data.Migrations
 {
     [DbContext(typeof(CmsDbContext))]
-    partial class CmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261009080748_AddThemeSurfaceAndHeadingFont")]
+    partial class AddThemeSurfaceAndHeadingFont
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -420,10 +423,6 @@ namespace CoderSight.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("FooterStyles")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("FooterText")
                         .HasColumnType("nvarchar(max)");
 
@@ -462,10 +461,6 @@ namespace CoderSight.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NavLogoTextColor")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("NavStyles")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -598,7 +593,6 @@ namespace CoderSight.Data.Migrations
                             FooterBorderColor = "#1F2937",
                             FooterHeadingColor = "#FFFFFF",
                             FooterLinkHoverColor = "#FFFFFF",
-                            FooterStyles = "",
                             FooterText = "© 2026 CoderSight. All rights reserved.",
                             FooterTextColor = "#9CA3AF",
                             NavBackgroundColor = "#FFFFFF",
@@ -608,7 +602,6 @@ namespace CoderSight.Data.Migrations
                             NavLogoFontSize = "1.25rem",
                             NavLogoHeight = "2rem",
                             NavLogoTextColor = "#020817",
-                            NavStyles = "",
                             NavTextColor = "#374151",
                             SiteBackgroundColor = "#F9FAFB",
                             SiteName = "CoderSight",

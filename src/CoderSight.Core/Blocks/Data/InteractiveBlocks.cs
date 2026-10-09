@@ -84,6 +84,12 @@ public class FormField
     public string Type { get; set; } = "text";
     public bool Required { get; set; }
     public string? Placeholder { get; set; }
+    /// <summary>
+    /// What the field submits as: name, email, subject or message. Empty means it is guessed from the
+    /// English label or the type, so labels in other languages should set it.
+    /// </summary>
+    [BlockOptions("", "name", "email", "subject", "message")]
+    public string? Name { get; set; }
 }
 
 [CmsBlock("Newsletter", Icon = "mail-forward", Description = "Email capture form", Category = "Interactive")]
@@ -93,5 +99,8 @@ public class NewsletterBlockData : IBlockData
     public string? Description { get; set; }
     public string ButtonText { get; set; } = "Subscribe";
     public string? Placeholder { get; set; }
+    /// <summary>dark: centred on the ink colour. brand: a rounded band in the primary colour, text beside the form.</summary>
+    [BlockOptions("dark", "brand")]
+    public string Style { get; set; } = "dark";
     public string GetDisplayName() => Title;
 }

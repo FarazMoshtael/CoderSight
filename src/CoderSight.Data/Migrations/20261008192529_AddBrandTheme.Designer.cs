@@ -4,6 +4,7 @@ using CoderSight.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CoderSight.Data.Migrations
 {
     [DbContext(typeof(CmsDbContext))]
-    partial class CmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20261008192529_AddBrandTheme")]
+    partial class AddBrandTheme
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -420,10 +423,6 @@ namespace CoderSight.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("FooterStyles")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("FooterText")
                         .HasColumnType("nvarchar(max)");
 
@@ -462,10 +461,6 @@ namespace CoderSight.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("NavLogoTextColor")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("NavStyles")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -530,19 +525,11 @@ namespace CoderSight.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("ThemeBorderColor")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("ThemeDarkColor")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ThemeFontFamily")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ThemeHeadingFontFamily")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -563,14 +550,6 @@ namespace CoderSight.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("ThemePrimaryHoverColor")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ThemeRadius")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ThemeSurfaceColor")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -598,7 +577,6 @@ namespace CoderSight.Data.Migrations
                             FooterBorderColor = "#1F2937",
                             FooterHeadingColor = "#FFFFFF",
                             FooterLinkHoverColor = "#FFFFFF",
-                            FooterStyles = "",
                             FooterText = "© 2026 CoderSight. All rights reserved.",
                             FooterTextColor = "#9CA3AF",
                             NavBackgroundColor = "#FFFFFF",
@@ -608,24 +586,19 @@ namespace CoderSight.Data.Migrations
                             NavLogoFontSize = "1.25rem",
                             NavLogoHeight = "2rem",
                             NavLogoTextColor = "#020817",
-                            NavStyles = "",
                             NavTextColor = "#374151",
                             SiteBackgroundColor = "#F9FAFB",
                             SiteName = "CoderSight",
                             SmtpPort = 587,
                             SmtpUseSsl = true,
                             SupportedCultures = "en,fa",
-                            ThemeBorderColor = "#E5E7EB",
                             ThemeDarkColor = "#1A2233",
                             ThemeFontFamily = "Sora",
-                            ThemeHeadingFontFamily = "",
                             ThemeInkColor = "#020817",
                             ThemeMutedColor = "#64748B",
                             ThemeOnPrimaryColor = "#FFFFFF",
                             ThemePrimaryColor = "#2563EB",
-                            ThemePrimaryHoverColor = "#1D4ED8",
-                            ThemeRadius = "0.75rem",
-                            ThemeSurfaceColor = "#FFFFFF"
+                            ThemePrimaryHoverColor = "#1D4ED8"
                         });
                 });
 
