@@ -2,7 +2,7 @@
 @inject ISiteSettingsService SettingsService
 @inject INavMenuService NavMenuService
 
-<nav class="sticky top-0 z-50" data-enhance-nav="false" style="background-color: @(settings?.NavBackgroundColor ?? "#FFFFFF"); border-bottom: 1px solid @(settings?.NavBorderColor ?? "#E5E7EB");">
+<nav class="sticky top-0 z-50 @navStyle.CustomCssClass" data-enhance-nav="false" style="@navStyle.ToInlineStyle()">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center" style="height: @(settings?.NavHeight ?? "4rem");">
             <div class="flex items-center gap-8">
@@ -19,7 +19,7 @@
                         {
                             <div class="cs-dropdown relative">
                                 <a href="@ResolveUrl(item)" class="cs-nav-link text-sm font-medium px-3 py-2 rounded-md transition-colors flex items-center gap-1"
-                                   style="color: @(settings?.NavTextColor ?? "#374151");"
+                                   style="color: @navStyle.TextColor;"
                                    target="@(item.OpenInNewTab ? "_blank" : null)">
                                     @GetLabel(item)
                                     <svg class="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -27,11 +27,11 @@
                                     </svg>
                                 </a>
                                 <div class="cs-dropdown-menu absolute top-full start-0 pt-1 hidden min-w-48 z-50">
-                                    <div class="rounded-lg shadow-lg border py-1" style="background-color: @(settings?.NavBackgroundColor ?? "#FFFFFF"); border-color: @(settings?.NavBorderColor ?? "#E5E7EB");">
+                                    <div class="rounded-lg shadow-lg border py-1" style="background-color: @navStyle.BackgroundColor; border-color: @navStyle.BorderColor;">
                                         @foreach (var child in item.Children)
                                         {
                                             <a href="@ResolveUrl(child)" class="cs-nav-link block px-4 py-2 text-sm transition-colors"
-                                               style="color: @(settings?.NavTextColor ?? "#374151");"
+                                               style="color: @navStyle.TextColor;"
                                                target="@(child.OpenInNewTab ? "_blank" : null)">
                                                 @GetLabel(child)
                                             </a>
@@ -43,7 +43,7 @@
                         else
                         {
                             <a href="@ResolveUrl(item)" class="cs-nav-link text-sm font-medium px-3 py-2 rounded-md transition-colors"
-                               style="color: @(settings?.NavTextColor ?? "#374151");"
+                               style="color: @navStyle.TextColor;"
                                target="@(item.OpenInNewTab ? "_blank" : null)">
                                 @GetLabel(item)
                             </a>
@@ -56,7 +56,7 @@
                 @if (isMultilingual)
                 {
                     <a href="@GetLanguageSwitchUrl()" class="text-sm transition-colors rounded-md px-3 py-1"
-                       style="color: @(settings?.NavTextColor ?? "#374151"); border: 1px solid @(settings?.NavBorderColor ?? "#E5E7EB");">
+                       style="color: @navStyle.TextColor; border: 1px solid @navStyle.BorderColor;">
                         @(IsRtl ? "EN" : "فا")
                     </a>
                 }
@@ -64,10 +64,10 @@
                     <Authorized Context="authCtx">
                         @if (settings?.EnableUserBlogSubmissions ?? false)
                         {
-                            <a href="/submit-post" class="hidden md:inline text-sm font-medium transition-colors cs-nav-link" style="color: @(settings?.NavTextColor ?? "#374151");">
+                            <a href="/submit-post" class="hidden md:inline text-sm font-medium transition-colors cs-nav-link" style="color: @navStyle.TextColor;">
                                 Write
                             </a>
-                            <a href="/my-posts" class="hidden md:inline text-sm font-medium transition-colors cs-nav-link" style="color: @(settings?.NavTextColor ?? "#374151");">
+                            <a href="/my-posts" class="hidden md:inline text-sm font-medium transition-colors cs-nav-link" style="color: @navStyle.TextColor;">
                                 My Posts
                             </a>
                         }
@@ -79,7 +79,7 @@
                                 </a>
                             </Authorized>
                         </AuthorizeView>
-                        <a href="/profile" class="hidden md:inline text-sm font-medium transition-colors cs-nav-link" style="color: @(settings?.NavTextColor ?? "#374151");">
+                        <a href="/profile" class="hidden md:inline text-sm font-medium transition-colors cs-nav-link" style="color: @navStyle.TextColor;">
                             @GetDisplayName(authCtx)
                         </a>
                         <a href="/api/auth/logout?returnUrl=@(isMultilingual ? $"/{culture}/" : "/")" class="hidden md:inline text-sm transition-colors" style="color: #64748B;">
@@ -89,7 +89,7 @@
                     <NotAuthorized>
                         @if (settings?.EnableUserRegistration ?? true)
                         {
-                            <a href="/login" class="text-sm font-medium transition-colors" style="color: @(settings?.NavTextColor ?? "#374151");">
+                            <a href="/login" class="text-sm font-medium transition-colors" style="color: @navStyle.TextColor;">
                                 Sign In
                             </a>
                             <a href="/register" class="hidden sm:inline text-sm text-white px-4 py-2 rounded-md hover:opacity-90 transition-colors"
@@ -99,7 +99,7 @@
                         }
                     </NotAuthorized>
                 </AuthorizeView>
-                <button onclick="csToggleMenu()" class="md:hidden p-2" style="color: @(settings?.NavTextColor ?? "#374151");" aria-label="Toggle menu">
+                <button onclick="csToggleMenu()" class="md:hidden p-2" style="color: @navStyle.TextColor;" aria-label="Toggle menu">
                     <svg id="cs-icon-hamburger" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
@@ -112,12 +112,12 @@
     </div>
 
     <!-- Mobile menu -->
-    <div id="cs-mobile-menu" class="hidden md:hidden" style="border-top: 1px solid @(settings?.NavBorderColor ?? "#E5E7EB"); background-color: @(settings?.NavBackgroundColor ?? "#FFFFFF");">
+    <div id="cs-mobile-menu" class="hidden md:hidden" style="border-top: 1px solid @navStyle.BorderColor; background-color: @navStyle.BackgroundColor;">
         <div class="px-4 py-3 space-y-1">
             @foreach (var item in menuItems)
             {
                 <a href="@ResolveUrl(item)" class="block py-2 px-2 rounded text-sm font-medium cs-nav-link"
-                   style="color: @(settings?.NavTextColor ?? "#374151");"
+                   style="color: @navStyle.TextColor;"
                    target="@(item.OpenInNewTab ? "_blank" : null)">
                     @GetLabel(item)
                 </a>
@@ -126,7 +126,7 @@
                     @foreach (var child in item.Children)
                     {
                         <a href="@ResolveUrl(child)" class="block py-2 px-2 rounded text-sm cs-nav-link"
-                           style="color: @(settings?.NavTextColor ?? "#374151"); padding-inline-start: 1.5rem;"
+                           style="color: @navStyle.TextColor; padding-inline-start: 1.5rem;"
                            target="@(child.OpenInNewTab ? "_blank" : null)">
                             @GetLabel(child)
                         </a>
@@ -136,19 +136,19 @@
 
             <AuthorizeView>
                 <Authorized Context="mobileAuth">
-                    <div class="border-t pt-2 mt-2" style="border-color: @(settings?.NavBorderColor ?? "#E5E7EB");">
+                    <div class="border-t pt-2 mt-2" style="border-color: @navStyle.BorderColor;">
                         <a href="/profile" class="block py-2 px-2 rounded text-sm font-medium cs-nav-link"
-                           style="color: @(settings?.NavTextColor ?? "#374151");">
+                           style="color: @navStyle.TextColor;">
                             @GetDisplayName(mobileAuth)
                         </a>
                         @if (settings?.EnableUserBlogSubmissions ?? false)
                         {
                             <a href="/submit-post" class="block py-2 px-2 rounded text-sm font-medium cs-nav-link"
-                               style="color: @(settings?.NavTextColor ?? "#374151");">
+                               style="color: @navStyle.TextColor;">
                                 Write
                             </a>
                             <a href="/my-posts" class="block py-2 px-2 rounded text-sm font-medium cs-nav-link"
-                               style="color: @(settings?.NavTextColor ?? "#374151");">
+                               style="color: @navStyle.TextColor;">
                                 My Posts
                             </a>
                         }
@@ -169,9 +169,9 @@
                 <NotAuthorized>
                     @if (settings?.EnableUserRegistration ?? true)
                     {
-                        <div class="border-t pt-2 mt-2" style="border-color: @(settings?.NavBorderColor ?? "#E5E7EB");">
+                        <div class="border-t pt-2 mt-2" style="border-color: @navStyle.BorderColor;">
                             <a href="/login" class="block py-2 px-2 rounded text-sm font-medium cs-nav-link"
-                               style="color: @(settings?.NavTextColor ?? "#374151");">
+                               style="color: @navStyle.TextColor;">
                                 Sign In
                             </a>
                             <a href="/register" class="block py-2 px-2 rounded text-sm font-medium cs-nav-link"
@@ -200,6 +200,7 @@
 
 @code {
     private SiteSettings? settings;
+    private BlockStyleOptions navStyle = new SiteSettings().ResolveNavStyle();
     private List<NavMenuItem> menuItems = [];
     private bool isMultilingual = true;
     private string culture => CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
@@ -208,6 +209,7 @@
     protected override async Task OnInitializedAsync()
     {
         settings = await SettingsService.GetAsync();
+        navStyle = settings.ResolveNavStyle();
         isMultilingual = settings?.EnableMultilingual ?? true;
         menuItems = await NavMenuService.GetMenuTreeAsync();
     }

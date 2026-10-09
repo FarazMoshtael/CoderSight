@@ -22,6 +22,9 @@ public class SiteSettings
     public string SiteBackgroundColor { get; set; } = "#F9FAFB";
 
     // Navbar styles
+    /// <summary>Serialized <see cref="BlockStyleOptions"/> for the navbar container.
+    /// Empty until first edited, in which case <see cref="ResolveNavStyle"/> derives it from the colors below.</summary>
+    public string NavStyles { get; set; } = "";
     public string NavBackgroundColor { get; set; } = "#FFFFFF";
     public string NavTextColor { get; set; } = "#374151";
     public string NavBorderColor { get; set; } = "#E5E7EB";
@@ -32,6 +35,9 @@ public class SiteSettings
     public string NavLogoFontSize { get; set; } = "1.25rem";
 
     // Footer styles
+    /// <summary>Serialized <see cref="BlockStyleOptions"/> for the footer container.
+    /// Empty until first edited, in which case <see cref="ResolveFooterStyle"/> derives it from the colors below.</summary>
+    public string FooterStyles { get; set; } = "";
     public string FooterBackgroundColor { get; set; } = "#111827";
     public string FooterTextColor { get; set; } = "#9CA3AF";
     public string FooterHeadingColor { get; set; } = "#FFFFFF";
@@ -58,4 +64,30 @@ public class SiteSettings
     public string? SmtpFromEmail { get; set; }
     public string? SmtpFromName { get; set; }
     public bool SmtpUseSsl { get; set; } = true;
+
+    /// <summary>The navbar container style — stored options when present, otherwise built from the legacy color fields.</summary>
+    public BlockStyleOptions ResolveNavStyle() =>
+        BlockStyleOptions.TryParse(NavStyles) ?? new BlockStyleOptions
+        {
+            BackgroundColor = NavBackgroundColor,
+            TextColor = NavTextColor,
+            BorderColor = NavBorderColor,
+            BorderWidth = "0 0 1px 0",
+            PaddingTop = "0",
+            PaddingBottom = "0",
+            PaddingLeft = "0",
+            PaddingRight = "0"
+        };
+
+    /// <summary>The footer container style — stored options when present, otherwise built from the legacy color fields.</summary>
+    public BlockStyleOptions ResolveFooterStyle() =>
+        BlockStyleOptions.TryParse(FooterStyles) ?? new BlockStyleOptions
+        {
+            BackgroundColor = FooterBackgroundColor,
+            TextColor = FooterTextColor,
+            PaddingTop = "0",
+            PaddingBottom = "0",
+            PaddingLeft = "0",
+            PaddingRight = "0"
+        };
 }

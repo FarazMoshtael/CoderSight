@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace CoderSight.Core.Entities;
 
 public class BlockStyleOptions
@@ -22,6 +24,32 @@ public class BlockStyleOptions
     public string CustomCssClass { get; set; } = "";
     public bool FullWidth { get; set; } = true;
 
+    public static readonly JsonSerializerOptions JsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true,
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+    };
+
+    /// <summary>Deserializes stored style JSON, returning null when nothing is stored.</summary>
+    public static BlockStyleOptions? TryParse(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json) || json == "{}")
+            return null;
+        try
+        {
+            return JsonSerializer.Deserialize<BlockStyleOptions>(json, JsonOptions);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Deserializes stored style JSON, falling back to defaults.</summary>
+    public static BlockStyleOptions FromJson(string? json) => TryParse(json) ?? new BlockStyleOptions();
+
+    public string ToJson() => JsonSerializer.Serialize(this, JsonOptions);
+
     public string ToInlineStyle()
     {
         var parts = new List<string>
@@ -32,7 +60,11 @@ public class BlockStyleOptions
             $"margin-top:{MarginTop}",
             $"margin-bottom:{MarginBottom}",
             $"border-radius:{BorderRadius}",
-            $"border:{BorderWidth} solid {BorderColor}",
+            // Emitted per-property (rather than the `border` shorthand) so per-side
+            // widths such as "0 0 1px 0" work — used by the navbar's bottom rule.
+            $"border-width:{BorderWidth}",
+            "border-style:solid",
+            $"border-color:{BorderColor}",
             $"max-width:{MaxWidth}"
         };
         if (MaxWidth != "100%")

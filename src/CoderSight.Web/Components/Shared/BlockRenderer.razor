@@ -1,4 +1,3 @@
-@using System.Text.Json
 @inject BlockRegistry Registry
 
 @foreach (var block in Blocks.OrderBy(b => b.SortOrder))
@@ -6,7 +5,7 @@
     var registration = Registry.Get(block.BlockType);
     if (registration is not null && registration.ComponentType != typeof(object))
     {
-        var style = DeserializeStyle(block.Styles);
+        var style = BlockStyleOptions.FromJson(block.Styles);
         <div class="@style.CustomCssClass" style="@style.ToInlineStyle()">
             <DynamicComponent Type="registration.ComponentType"
                               Parameters="Registry.DeserializeAsParameters(block.BlockType, block.Data)" />
@@ -17,24 +16,4 @@
 @code {
     [Parameter, EditorRequired]
     public List<PageBlock> Blocks { get; set; } = [];
-
-    private static readonly JsonSerializerOptions JsonOpts = new()
-    {
-        PropertyNameCaseInsensitive = true,
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase
-    };
-
-    private static BlockStyleOptions DeserializeStyle(string? json)
-    {
-        if (string.IsNullOrWhiteSpace(json) || json == "{}")
-            return new BlockStyleOptions();
-        try
-        {
-            return JsonSerializer.Deserialize<BlockStyleOptions>(json, JsonOpts) ?? new BlockStyleOptions();
-        }
-        catch
-        {
-            return new BlockStyleOptions();
-        }
-    }
 }

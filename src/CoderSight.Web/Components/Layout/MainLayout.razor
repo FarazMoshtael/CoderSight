@@ -9,7 +9,7 @@
         @Body
     </main>
 
-    <footer data-enhance-nav="false" style="background-color: @(settings?.FooterBackgroundColor ?? "#111827"); color: @(settings?.FooterTextColor ?? "#9CA3AF");">
+    <footer data-enhance-nav="false" class="@footerStyle.CustomCssClass" style="@footerStyle.ToInlineStyle()">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div>
@@ -70,6 +70,7 @@
 
 @code {
     private SiteSettings? settings;
+    private BlockStyleOptions footerStyle = new SiteSettings().ResolveFooterStyle();
     private List<NavMenuItem> footerLinks = [];
     private string culture => CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
     private bool IsRtl => CultureInfo.CurrentCulture.TextInfo.IsRightToLeft;
@@ -87,6 +88,7 @@
     protected override async Task OnInitializedAsync()
     {
         settings = await SettingsService.GetAsync();
+        footerStyle = settings.ResolveFooterStyle();
         var menuTree = await NavMenuService.GetMenuTreeAsync();
         footerLinks = menuTree.Where(m => m.IsVisible).ToList();
     }
