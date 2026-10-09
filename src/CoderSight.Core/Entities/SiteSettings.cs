@@ -26,6 +26,10 @@ public class SiteSettings
     public string ThemeDarkColor { get; set; } = "#1A2233";
     public string ThemeMutedColor { get; set; } = "#64748B";
     public string ThemeFontFamily { get; set; } = "Sora";
+    public string ThemeHeadingFontFamily { get; set; } = string.Empty;
+    public string ThemeSurfaceColor { get; set; } = "#FFFFFF";
+    public string ThemeBorderColor { get; set; } = "#E5E7EB";
+    public string ThemeRadius { get; set; } = "0.75rem";
 
     // Site background
     public string SiteBackgroundColor { get; set; } = "#F9FAFB";

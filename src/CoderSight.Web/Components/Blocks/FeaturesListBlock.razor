@@ -1,6 +1,6 @@
 @using CoderSight.Core.Blocks.Data
 
-<section class="py-16 px-4 bg-white">
+<section class="py-16 px-4 bg-brand-surface">
     <div class="max-w-6xl mx-auto">
         @if (!string.IsNullOrEmpty(Data?.SectionTitle))
         {
@@ -12,8 +12,8 @@
                 @foreach (var feature in Data.Features)
                 {
                     <div class="text-center p-6">
-                        <div class="w-12 h-12 bg-brand-blue/10 text-brand-blue rounded-lg flex items-center justify-center mx-auto mb-4 text-xl font-bold">
-                            @feature.Icon[..1].ToUpper()
+                        <div class="w-12 h-12 bg-brand-blue/10 text-brand-blue rounded-lg flex items-center justify-center mx-auto mb-4 text-xl">
+                            <CsIcon Name="@feature.Icon" />
                         </div>
                         <h3 class="text-lg font-semibold text-brand-navy mb-2">@feature.Title</h3>
                         <p class="text-brand-slate">@feature.Description</p>

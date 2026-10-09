@@ -14,6 +14,10 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=@(_fontFamily.Replace(' ', '+')):wght@300;400;500;600;700&family=Vazirmatn:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    @if (!string.IsNullOrEmpty(_headingFontFamily) && _headingFontFamily != _fontFamily)
+    {
+        <link href="https://fonts.googleapis.com/css2?family=@(_headingFontFamily.Replace(' ', '+')):wght@400;500;600;700&display=swap" rel="stylesheet" />
+    }
     <style>@((MarkupString)_themeCss)</style>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -33,7 +37,12 @@
                             navy: 'rgb(var(--cs-ink) / <alpha-value>)',
                             dark: 'rgb(var(--cs-dark) / <alpha-value>)',
                             slate: 'rgb(var(--cs-muted) / <alpha-value>)',
+                            surface: 'rgb(var(--cs-surface) / <alpha-value>)',
+                            border: 'rgb(var(--cs-border) / <alpha-value>)',
                         },
+                    },
+                    borderRadius: {
+                        brand: 'var(--cs-radius)',
                     },
                 },
             },
@@ -106,6 +115,7 @@
     private string _siteName = "CoderSight";
     private string? _turnstileSiteKey;
     private string _fontFamily = ThemeColors.FontFamily;
+    private string _headingFontFamily = string.Empty;
     private string _themeCss = string.Empty;
 
     protected override async Task OnInitializedAsync()
@@ -117,10 +127,11 @@
         _turnstileSiteKey = !string.IsNullOrEmpty(settings?.TurnstileSiteKey) && !string.IsNullOrEmpty(settings?.TurnstileSecretKey)
             ? settings.TurnstileSiteKey : null;
         _fontFamily = ThemeColors.SanitizeFontFamily(settings?.ThemeFontFamily);
-        _themeCss = BuildThemeCss(settings ?? new SiteSettings(), _fontFamily);
+        _headingFontFamily = ThemeColors.SanitizeOptionalFontFamily(settings?.ThemeHeadingFontFamily);
+        _themeCss = BuildThemeCss(settings ?? new SiteSettings(), _fontFamily, _headingFontFamily);
     }
 
-    private static string BuildThemeCss(SiteSettings s, string fontFamily) =>
+    private static string BuildThemeCss(SiteSettings s, string fontFamily, string headingFontFamily) =>
         ":root{" +
         $"--cs-primary:{ThemeColors.ToRgbChannels(s.ThemePrimaryColor, ThemeColors.Primary)};" +
         $"--cs-primary-hover:{ThemeColors.ToRgbChannels(s.ThemePrimaryHoverColor, ThemeColors.PrimaryHover)};" +
@@ -128,6 +139,12 @@
         $"--cs-ink:{ThemeColors.ToRgbChannels(s.ThemeInkColor, ThemeColors.Ink)};" +
         $"--cs-dark:{ThemeColors.ToRgbChannels(s.ThemeDarkColor, ThemeColors.Dark)};" +
         $"--cs-muted:{ThemeColors.ToRgbChannels(s.ThemeMutedColor, ThemeColors.Muted)};" +
+        $"--cs-surface:{ThemeColors.ToRgbChannels(s.ThemeSurfaceColor, ThemeColors.Surface)};" +
+        $"--cs-border:{ThemeColors.ToRgbChannels(s.ThemeBorderColor, ThemeColors.Border)};" +
+        $"--cs-radius:{ThemeColors.SanitizeRadius(s.ThemeRadius)};" +
         $"--cs-font-body:'{fontFamily}';" +
-        "}";
+        "}" +
+        (string.IsNullOrEmpty(headingFontFamily)
+            ? string.Empty
+            : $"h1,h2,h3,.font-heading{{font-family:'{headingFontFamily}',var(--cs-font-body),sans-serif;}}");
 }

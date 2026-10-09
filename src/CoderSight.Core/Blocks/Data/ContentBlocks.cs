@@ -3,6 +3,10 @@ namespace CoderSight.Core.Blocks.Data;
 [CmsBlock("Hero", Icon = "layout", Description = "Full-width banner with title, subtitle, and CTA", Category = "Content")]
 public class HeroBlockData : IBlockData
 {
+    [BlockOptions("centered", "split")]
+    public string Layout { get; set; } = "centered";
+    public string? Eyebrow { get; set; }
+    public string? ImageUrl { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Subtitle { get; set; } = string.Empty;
     public string? ButtonText { get; set; }

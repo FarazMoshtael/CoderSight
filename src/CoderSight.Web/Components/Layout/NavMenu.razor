@@ -53,7 +53,7 @@
             </div>
 
             <div class="flex items-center gap-3">
-                @if (isMultilingual)
+                @if (isMultilingual && hasSeveralCultures)
                 {
                     <a href="@GetLanguageSwitchUrl()" class="text-sm transition-colors rounded-md px-3 py-1"
                        style="color: @(settings?.NavTextColor ?? "#374151"); border: 1px solid @(settings?.NavBorderColor ?? "#E5E7EB");">
@@ -202,6 +202,8 @@
     private SiteSettings? settings;
     private List<NavMenuItem> menuItems = [];
     private bool isMultilingual = true;
+    // The language switch only makes sense when the site offers more than one language.
+    private bool hasSeveralCultures = true;
     private string culture => CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
     private bool IsRtl => CultureInfo.CurrentCulture.TextInfo.IsRightToLeft;
 
@@ -209,6 +211,8 @@
     {
         settings = await SettingsService.GetAsync();
         isMultilingual = settings?.EnableMultilingual ?? true;
+        hasSeveralCultures = (settings?.SupportedCultures ?? "en,fa")
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Length > 1;
         menuItems = await NavMenuService.GetMenuTreeAsync();
     }
 

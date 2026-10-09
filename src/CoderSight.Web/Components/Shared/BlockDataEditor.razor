@@ -129,6 +129,36 @@ else
         var label = FormatLabel(prop.Name);
         var value = prop.GetValue(instance);
 
+        var options = prop.GetCustomAttribute<BlockOptionsAttribute>();
+        if (underlyingType == typeof(string) && options is not null)
+        {
+            // A fixed set of values (layout or style variant): show a picker.
+            var current = value as string ?? "";
+            builder.OpenElement(0, "div");
+            builder.OpenElement(1, "label");
+            builder.AddAttribute(2, "class", "block text-xs font-medium text-gray-600 mb-1");
+            builder.AddContent(3, prefix + label);
+            builder.CloseElement();
+            builder.OpenElement(4, "select");
+            builder.AddAttribute(5, "class", "w-full border border-gray-200 rounded px-3 py-2 text-sm focus:ring-brand-blue focus:border-brand-blue");
+            builder.AddAttribute(6, "value", current);
+            builder.AddAttribute(7, "onchange", EventCallback.Factory.Create<ChangeEventArgs>(this, e =>
+            {
+                prop.SetValue(instance, e.Value?.ToString() ?? "");
+                NotifyChanged();
+            }));
+            foreach (var option in options.Values)
+            {
+                builder.OpenElement(8, "option");
+                builder.AddAttribute(9, "value", option);
+                builder.AddContent(10, option.Length == 0 ? "(auto)" : option);
+                builder.CloseElement();
+            }
+            builder.CloseElement(); // select
+            builder.CloseElement(); // div
+            return;
+        }
+
         if (underlyingType == typeof(string))
         {
             var strVal = value as string ?? "";

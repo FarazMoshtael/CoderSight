@@ -1,28 +1,68 @@
 @using CoderSight.Core.Blocks.Data
 
-@{
+@if (Data?.Layout == "split")
+{
+    // Text beside a framed image, on the page background (or BackgroundColor), in the ink colour.
+    var splitStyle = string.IsNullOrEmpty(Data.BackgroundColor) ? "" : $"background-color: {ThemeColors.Resolve(Data.BackgroundColor)};";
+    <section class="relative py-16 md:py-24 px-4 text-brand-navy" style="@splitStyle">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12 md:gap-16">
+            <div class="flex-1 min-w-0 text-center md:text-start">
+                @if (!string.IsNullOrEmpty(Data.Eyebrow))
+                {
+                    <p class="text-brand-dark font-semibold mb-4">@Data.Eyebrow</p>
+                }
+                <h1 class="text-4xl md:text-6xl font-bold leading-snug mb-6 whitespace-pre-line">@Data.Title</h1>
+                @if (!string.IsNullOrEmpty(Data.Subtitle))
+                {
+                    <p class="text-lg md:text-xl text-brand-slate leading-loose mb-9 max-w-xl mx-auto md:mx-0">@Data.Subtitle</p>
+                }
+                @if (!string.IsNullOrEmpty(Data.ButtonText))
+                {
+                    <a href="@Data.ButtonLink" class="inline-block bg-brand-blue text-brand-on-blue px-8 py-4 rounded-brand font-semibold hover:bg-brand-blue-hover transition-colors">
+                        @Data.ButtonText
+                    </a>
+                }
+            </div>
+            @if (!string.IsNullOrEmpty(Data.ImageUrl))
+            {
+                <div class="flex-1 w-full flex justify-center">
+                    <div class="relative w-full max-w-md aspect-square rounded-full bg-brand-border/40 flex items-center justify-center">
+                        <div class="absolute inset-5 rounded-full border-2 border-dashed border-brand-border"></div>
+                        <img src="@Data.ImageUrl" alt="@Data.Title" class="relative w-3/5 h-auto" />
+                    </div>
+                </div>
+            }
+        </div>
+    </section>
+}
+else
+{
     var heroBg = ThemeColors.Resolve(Data?.BackgroundColor ?? ThemeColors.Ink);
     var heroStyle = $"background: linear-gradient(135deg, {heroBg}, rgb(var(--cs-dark)));";
+    <section class="relative py-24 px-4 text-center text-white" style="@heroStyle">
+        @if (!string.IsNullOrEmpty(Data?.BackgroundImageUrl))
+        {
+            <div class="absolute inset-0 bg-cover bg-center opacity-30" style="background-image: url('@Data.BackgroundImageUrl');"></div>
+        }
+        <div class="relative max-w-4xl mx-auto">
+            @if (!string.IsNullOrEmpty(Data?.Eyebrow))
+            {
+                <p class="text-gray-300 font-medium mb-3">@Data.Eyebrow</p>
+            }
+            <h1 class="text-4xl md:text-5xl font-bold mb-4">@Data?.Title</h1>
+            @if (!string.IsNullOrEmpty(Data?.Subtitle))
+            {
+                <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">@Data.Subtitle</p>
+            }
+            @if (!string.IsNullOrEmpty(Data?.ButtonText))
+            {
+                <a href="@Data?.ButtonLink" class="inline-block bg-brand-blue text-brand-on-blue px-6 sm:px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-colors">
+                    @Data.ButtonText
+                </a>
+            }
+        </div>
+    </section>
 }
-<section class="relative py-24 px-4 text-center text-white" style="@heroStyle">
-    @if (!string.IsNullOrEmpty(Data?.BackgroundImageUrl))
-    {
-        <div class="absolute inset-0 bg-cover bg-center opacity-30" style="background-image: url('@Data.BackgroundImageUrl');"></div>
-    }
-    <div class="relative max-w-4xl mx-auto">
-        <h1 class="text-4xl md:text-5xl font-bold mb-4">@Data?.Title</h1>
-        @if (!string.IsNullOrEmpty(Data?.Subtitle))
-        {
-            <p class="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">@Data.Subtitle</p>
-        }
-        @if (!string.IsNullOrEmpty(Data?.ButtonText))
-        {
-            <a href="@Data?.ButtonLink" class="inline-block bg-brand-blue text-brand-on-blue px-6 sm:px-8 py-3 rounded-lg font-medium hover:opacity-90 transition-colors">
-                @Data.ButtonText
-            </a>
-        }
-    </div>
-</section>
 
 @code {
     [Parameter] public HeroBlockData? Data { get; set; }

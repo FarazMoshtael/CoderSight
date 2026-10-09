@@ -45,6 +45,9 @@
     margin-left: auto;
     margin-right: auto;
 }
+.cs-newsletter-row--fill {
+    max-width: none;
+}
 .cs-newsletter-row input,
 .cs-newsletter-row button {
     width: 100%;
@@ -81,3 +84,6 @@
     right: 0.75rem;
     top: 0.5rem;
 }
+
+/* Arrows that point "forward" flip in right-to-left pages */
+[dir="rtl"] .cs-arrow { display: inline-block; transform: scaleX(-1); }

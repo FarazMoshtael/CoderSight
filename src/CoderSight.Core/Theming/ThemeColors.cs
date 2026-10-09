@@ -16,6 +16,9 @@ public static partial class ThemeColors
     public const string Dark = "#1A2233";
     public const string Muted = "#64748B";
     public const string FontFamily = "Sora";
+    public const string Surface = "#FFFFFF";
+    public const string Border = "#E5E7EB";
+    public const string Radius = "0.75rem";
 
     /// <summary>
     /// Maps a default brand hex value stored in block data or block styles to its theme variable,
@@ -63,6 +66,22 @@ public static partial class ThemeColors
         return true;
     }
 
+    /// <summary>
+    /// Like <see cref="SanitizeFontFamily"/>, but an empty name stays empty (meaning "use the body font").
+    /// </summary>
+    public static string SanitizeOptionalFontFamily(string? name) =>
+        FontNameRegex().Replace(name ?? string.Empty, "").Trim();
+
+    /// <summary>Accepts a single CSS length such as <c>0.75rem</c>, <c>12px</c> or <c>0</c>; anything else gets the default.</summary>
+    public static string SanitizeRadius(string? value)
+    {
+        var v = value?.Trim() ?? string.Empty;
+        return RadiusRegex().IsMatch(v) ? v : Radius;
+    }
+
     [GeneratedRegex("[^A-Za-z0-9 ]")]
     private static partial Regex FontNameRegex();
+
+    [GeneratedRegex(@"^(0|\d{1,3}(\.\d{1,3})?(px|rem|em))$")]
+    private static partial Regex RadiusRegex();
 }

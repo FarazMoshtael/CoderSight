@@ -4,14 +4,55 @@
     <div class="max-w-6xl mx-auto">
         @if (!string.IsNullOrEmpty(Data?.SectionTitle))
         {
-            <h2 class="text-3xl font-bold text-center text-gray-900 mb-2">@Data.SectionTitle</h2>
+            <h2 class="text-3xl font-bold text-center text-brand-navy mb-2">@Data.SectionTitle</h2>
         }
         @if (!string.IsNullOrEmpty(Data?.SectionSubtitle))
         {
-            <p class="text-center text-gray-500 mb-10 max-w-2xl mx-auto">@Data.SectionSubtitle</p>
+            <p class="text-center text-brand-slate mb-10 max-w-2xl mx-auto">@Data.SectionSubtitle</p>
         }
 
-        @if (Data?.Products is not null && Data.Products.Any())
+        @if (Data?.Layout == "list" && Data.Products is not null && Data.Products.Any())
+        {
+            // Menu-style rows: name, optional badge and description, price at the end of the line.
+            <ul class="grid grid-cols-1 @(Data.Columns >= 2 ? "md:grid-cols-2" : "") gap-x-14 border-t-2 border-brand-navy max-w-5xl mx-auto">
+                @foreach (var product in Data.Products)
+                {
+                    <li class="flex items-baseline gap-4 py-5 border-b border-brand-border">
+                        <div class="flex-1 min-w-0">
+                            <p class="text-lg font-bold text-brand-navy">
+                                @if (!string.IsNullOrEmpty(product.LinkUrl))
+                                {
+                                    <a href="@product.LinkUrl" class="hover:text-brand-blue">@product.Title</a>
+                                }
+                                else
+                                {
+                                    @product.Title
+                                }
+                                @if (!string.IsNullOrEmpty(product.Badge))
+                                {
+                                    <span class="ms-2 align-middle text-xs font-semibold text-brand-dark bg-brand-border/50 px-2.5 py-0.5 rounded-full">@product.Badge</span>
+                                }
+                            </p>
+                            @if (!string.IsNullOrEmpty(product.Description))
+                            {
+                                <p class="text-sm text-brand-slate leading-relaxed mt-1">@product.Description</p>
+                            }
+                        </div>
+                        @if (!string.IsNullOrEmpty(product.Price))
+                        {
+                            <p class="shrink-0 whitespace-nowrap font-bold text-brand-blue">
+                                @product.Price
+                                @if (!string.IsNullOrEmpty(product.OriginalPrice))
+                                {
+                                    <span class="ms-1 text-xs font-normal text-brand-slate line-through">@product.OriginalPrice</span>
+                                }
+                            </p>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+        else if (Data?.Products is not null && Data.Products.Any())
         {
             var cols = Data.Columns switch { 2 => "sm:grid-cols-2", 4 => "sm:grid-cols-2 lg:grid-cols-4", _ => "sm:grid-cols-2 lg:grid-cols-3" };
             <div class="grid grid-cols-1 @cols gap-6">
@@ -82,9 +123,9 @@
 
 <style>
     .cs-product-card {
-        background: #fff;
-        border: 1px solid #e5e7eb;
-        border-radius: 1rem;
+        background: rgb(var(--cs-surface));
+        border: 1px solid rgb(var(--cs-border));
+        border-radius: var(--cs-radius);
         overflow: hidden;
         position: relative;
         transition: transform 0.35s ease, box-shadow 0.35s ease;
@@ -96,9 +137,9 @@
     .cs-product-badge {
         position: absolute;
         top: 12px;
-        right: 12px;
-        background: linear-gradient(135deg, #ef4444, #dc2626);
-        color: #fff;
+        inset-inline-end: 12px;
+        background: rgb(var(--cs-primary));
+        color: rgb(var(--cs-on-primary));
         font-size: 11px;
         font-weight: 700;
         padding: 3px 10px;
@@ -124,7 +165,7 @@
     .cs-product-title {
         font-size: 1.05rem;
         font-weight: 600;
-        color: #111827;
+        color: rgb(var(--cs-ink));
         margin: 0 0 0.4rem;
     }
     .cs-product-rating {
@@ -144,7 +185,7 @@
     }
     .cs-product-desc {
         font-size: 0.85rem;
-        color: #6b7280;
+        color: rgb(var(--cs-muted));
         margin: 0 0 1rem;
         line-height: 1.5;
         display: -webkit-box;
@@ -165,7 +206,7 @@
     .cs-price-current {
         font-size: 1.15rem;
         font-weight: 700;
-        color: #111827;
+        color: rgb(var(--cs-ink));
     }
     .cs-price-original {
         font-size: 0.85rem;
