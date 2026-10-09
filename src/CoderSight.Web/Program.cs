@@ -130,7 +130,8 @@ app.UseRequestLocalization(new RequestLocalizationOptions
     [
         new UrlSegmentCultureProvider(),
         new QueryStringRequestCultureProvider(),
-        new CookieRequestCultureProvider()
+        new CookieRequestCultureProvider(),
+        new SiteDefaultCultureProvider()
     ]
 });
 

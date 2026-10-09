@@ -2,57 +2,71 @@
 @inject ISiteSettingsService SettingsService
 @inject INavMenuService NavMenuService
 
-<nav class="sticky top-0 z-50 @navStyle.CustomCssClass" data-enhance-nav="false" style="@navStyle.ToInlineStyle()">
+@{
+    RenderFragment menuLinks = @<text>
+        <div class="hidden md:flex gap-1">
+            @foreach (var item in menuItems)
+            {
+                @if (item.Children.Any())
+                {
+                    <div class="cs-dropdown relative">
+                        <a href="@ResolveUrl(item)" class="cs-nav-link text-sm font-medium px-3 py-2 rounded-md transition-colors flex items-center gap-1"
+                           style="color: @navStyle.TextColor;"
+                           target="@(item.OpenInNewTab ? "_blank" : null)">
+                            @GetLabel(item)
+                            <svg class="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </a>
+                        <div class="cs-dropdown-menu absolute top-full start-0 pt-1 hidden min-w-48 z-50">
+                            <div class="rounded-lg shadow-lg border py-1" style="background-color: @navStyle.BackgroundColor; border-color: @navStyle.BorderColor;">
+                                @foreach (var child in item.Children)
+                                {
+                                    <a href="@ResolveUrl(child)" class="cs-nav-link block px-4 py-2 text-sm transition-colors"
+                                       style="color: @navStyle.TextColor;"
+                                       target="@(child.OpenInNewTab ? "_blank" : null)">
+                                        @GetLabel(child)
+                                    </a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <a href="@ResolveUrl(item)" class="cs-nav-link text-sm font-medium px-3 py-2 rounded-md transition-colors"
+                       style="color: @navStyle.TextColor;"
+                       target="@(item.OpenInNewTab ? "_blank" : null)">
+                        @GetLabel(item)
+                    </a>
+                }
+            }
+        </div>
+    </text>;
+}
+
+<nav class="sticky top-0 z-50 @navStyle.CustomCssClass" dir="@navDir" data-enhance-nav="false" style="@navStyle.ToInlineStyle()">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between items-center" style="height: @(settings?.NavHeight ?? "4rem");">
-            <div class="flex items-center gap-8">
+        <div class="@(navCentered ? "grid grid-cols-[1fr_auto_1fr] gap-4" : "flex justify-between") items-center" style="height: @(settings?.NavHeight ?? "4rem");">
+            <div class="flex items-center gap-8 @(navCentered ? "justify-self-start" : "")">
                 <a href="@(isMultilingual ? $"/{culture}/" : "/")" class="flex items-center gap-2">
                     <img src="@(settings?.LogoUrl ?? "/uploads/logo-icon.svg")" alt="@(settings?.SiteName ?? "CoderSight")" class="w-auto" style="height: @(settings?.NavLogoHeight ?? "2rem");" />
                     <span class="font-bold hidden sm:inline" style="color: @(settings?.NavLogoTextColor ?? "#020817"); font-size: @(settings?.NavLogoFontSize ?? "1.25rem");">
                         @(settings?.SiteName ?? "CoderSight")
                     </span>
                 </a>
-                <div class="hidden md:flex gap-1">
-                    @foreach (var item in menuItems)
-                    {
-                        @if (item.Children.Any())
-                        {
-                            <div class="cs-dropdown relative">
-                                <a href="@ResolveUrl(item)" class="cs-nav-link text-sm font-medium px-3 py-2 rounded-md transition-colors flex items-center gap-1"
-                                   style="color: @navStyle.TextColor;"
-                                   target="@(item.OpenInNewTab ? "_blank" : null)">
-                                    @GetLabel(item)
-                                    <svg class="w-3.5 h-3.5 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                                    </svg>
-                                </a>
-                                <div class="cs-dropdown-menu absolute top-full start-0 pt-1 hidden min-w-48 z-50">
-                                    <div class="rounded-lg shadow-lg border py-1" style="background-color: @navStyle.BackgroundColor; border-color: @navStyle.BorderColor;">
-                                        @foreach (var child in item.Children)
-                                        {
-                                            <a href="@ResolveUrl(child)" class="cs-nav-link block px-4 py-2 text-sm transition-colors"
-                                               style="color: @navStyle.TextColor;"
-                                               target="@(child.OpenInNewTab ? "_blank" : null)">
-                                                @GetLabel(child)
-                                            </a>
-                                        }
-                                    </div>
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <a href="@ResolveUrl(item)" class="cs-nav-link text-sm font-medium px-3 py-2 rounded-md transition-colors"
-                               style="color: @navStyle.TextColor;"
-                               target="@(item.OpenInNewTab ? "_blank" : null)">
-                                @GetLabel(item)
-                            </a>
-                        }
-                    }
-                </div>
+                @if (!navCentered)
+                {
+                    @menuLinks
+                }
             </div>
 
-            <div class="flex items-center gap-3">
+            @if (navCentered)
+            {
+                <div class="justify-self-center">@menuLinks</div>
+            }
+
+            <div class="flex items-center gap-3 @(navCentered ? "justify-self-end" : "")">
                 @if (isMultilingual && hasSeveralCultures)
                 {
                     <a href="@GetLanguageSwitchUrl()" class="text-sm transition-colors rounded-md px-3 py-1"
@@ -113,7 +127,7 @@
 
     <!-- Mobile menu -->
     <div id="cs-mobile-menu" class="hidden md:hidden" style="border-top: 1px solid @navStyle.BorderColor; background-color: @navStyle.BackgroundColor;">
-        <div class="px-4 py-3 space-y-1">
+        <div class="px-4 py-3 space-y-1 @(navCentered ? "text-center" : "")">
             @foreach (var item in menuItems)
             {
                 <a href="@ResolveUrl(item)" class="block py-2 px-2 rounded text-sm font-medium cs-nav-link"
@@ -206,7 +220,9 @@
     // The language switch only makes sense when the site offers more than one language.
     private bool hasSeveralCultures = true;
     private string culture => CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
-    private bool IsRtl => CultureInfo.CurrentCulture.TextInfo.IsRightToLeft;
+    private bool IsRtl => LayoutDirection.IsRtl(CultureInfo.CurrentCulture);
+    private string? navDir => LayoutDirection.DirAttribute(settings?.NavDirection);
+    private bool navCentered => LayoutDirection.IsCenter(settings?.NavDirection);
 
     protected override async Task OnInitializedAsync()
     {

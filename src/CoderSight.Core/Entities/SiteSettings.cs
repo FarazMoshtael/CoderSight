@@ -38,6 +38,8 @@ public class SiteSettings
     /// <summary>Serialized <see cref="BlockStyleOptions"/> for the navbar container.
     /// Empty until first edited, in which case <see cref="ResolveNavStyle"/> derives it from the colors below.</summary>
     public string NavStyles { get; set; } = "";
+    /// <summary>Navbar item direction: auto (follows the page language), ltr, rtl or center. See <see cref="Theming.LayoutDirection"/>.</summary>
+    public string NavDirection { get; set; } = "auto";
     public string NavBackgroundColor { get; set; } = "#FFFFFF";
     public string NavTextColor { get; set; } = "#374151";
     public string NavBorderColor { get; set; } = "#E5E7EB";
@@ -51,6 +53,8 @@ public class SiteSettings
     /// <summary>Serialized <see cref="BlockStyleOptions"/> for the footer container.
     /// Empty until first edited, in which case <see cref="ResolveFooterStyle"/> derives it from the colors below.</summary>
     public string FooterStyles { get; set; } = "";
+    /// <summary>Footer direction: auto (follows the page language), ltr, rtl or center.</summary>
+    public string FooterDirection { get; set; } = "auto";
     public string FooterBackgroundColor { get; set; } = "#111827";
     public string FooterTextColor { get; set; } = "#9CA3AF";
     public string FooterHeadingColor { get; set; } = "#FFFFFF";

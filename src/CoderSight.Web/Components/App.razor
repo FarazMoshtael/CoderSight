@@ -3,7 +3,7 @@
 
 <!DOCTYPE html>
 <html lang="@CultureInfo.CurrentCulture.TwoLetterISOLanguageName"
-      dir="@(CultureInfo.CurrentCulture.TextInfo.IsRightToLeft ? "rtl" : "ltr")">
+      dir="@(LayoutDirection.IsRtl(CultureInfo.CurrentCulture) ? "rtl" : "ltr")">
 
 <head>
     <meta charset="utf-8" />
