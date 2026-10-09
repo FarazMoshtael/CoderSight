@@ -9,8 +9,8 @@
         @Body
     </main>
 
-    <footer data-enhance-nav="false" class="@footerStyle.CustomCssClass" style="@footerStyle.ToInlineStyle()">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <footer data-enhance-nav="false" dir="@footerDir" class="@footerStyle.CustomCssClass" style="@footerStyle.ToInlineStyle()">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 @(footerCentered ? "text-center" : "")">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <div>
                     <a href="/@culture/" class="inline-flex items-center gap-2 mb-4">
@@ -73,7 +73,9 @@
     private BlockStyleOptions footerStyle = new SiteSettings().ResolveFooterStyle();
     private List<NavMenuItem> footerLinks = [];
     private string culture => CultureInfo.CurrentCulture.TwoLetterISOLanguageName;
-    private bool IsRtl => CultureInfo.CurrentCulture.TextInfo.IsRightToLeft;
+    private bool IsRtl => LayoutDirection.IsRtl(CultureInfo.CurrentCulture);
+    private string? footerDir => LayoutDirection.DirAttribute(settings?.FooterDirection);
+    private bool footerCentered => LayoutDirection.IsCenter(settings?.FooterDirection);
 
     private List<(string Name, string Url)> SocialLinks => new[]
     {
