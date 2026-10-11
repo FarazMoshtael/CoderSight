@@ -107,29 +107,29 @@ pages = [{
 }]
 
 
-# Product families on the Services page: (title, subtitle, family image, [(image, product, spec)]).
+# Product families on the Services page: (family, [(image, product, spec)]).
 FAMILIES = [
-    ("کارت ویزیت", "۱۰۰۰ عدد در هر سفارش؛ تیراژِ کمتر را هم بپرسید", "service-business-cards", [
+    ("کارت ویزیت", [
         ("product-card-matte", "سلفون مات یا براق", "۳۰۰ گرم، یک‌رو یا دورو."),
         ("product-card-foil", "طلاکوب و نقره‌کوب", "طلاکوبِ داغ روی سلفونِ مات."),
         ("product-card-clear", "کارت شفاف", "روی PVC شفاف یا مات، ضدآب."),
     ]),
-    ("تبلیغاتِ چاپی", "برای معرفیِ کسب‌وکار، نمایشگاه و رویداد", "service-brochure", [
+    ("تبلیغاتِ چاپی", [
         ("service-brochure", "بروشور", "A4 و A5، تک‌برگ، دولت یا سه‌لت."),
         ("product-catalog", "کاتالوگ", "از ۸ صفحه، صحافیِ منگنه یا چسب گرم."),
         ("product-poster", "پوستر", "A3 تا ۷۰×۱۰۰، روی گلاسه یا مات."),
     ]),
-    ("بنر و نمایشگاه", "چاپِ عریض برای فضای باز و داخلی", "service-banner", [
+    ("بنر و نمایشگاه", [
         ("service-banner", "رول‌آپ", "۸۰×۲۰۰ یا ۱۰۰×۲۰۰، با پایه و کیف."),
         ("product-flex-banner", "بنرِ فلکسی", "هر اندازه، با دوخت و پرچ."),
         ("product-x-stand", "استندِ X", "سبک و تاشو برای پیشخوان و نمایشگاه."),
     ]),
-    ("لیبل و بسته‌بندی", "برای محصولی که در قفسه دیده شود", "service-packaging", [
+    ("لیبل و بسته‌بندی", [
         ("service-labels", "لیبل و استیکر", "برش‌خورده در هر شکل، کاغذی، PVC یا شفاف."),
         ("service-packaging", "جعبه‌ی محصول", "تیراژِ کم، با طراحیِ قالب و برش."),
         ("product-bag", "ساک دستیِ کاغذی", "کرافت یا سفید، با چاپِ لوگو."),
     ]),
-    ("اداری و مراسم", "اوراقِ اداری و کارت‌های مناسبتی", "service-invitations", [
+    ("اداری و مراسم", [
         ("product-letterhead", "سربرگ و پاکت", "تحریرِ ۸۰ یا ۱۰۰ گرم، با طرحِ اختصاصی."),
         ("service-invitations", "کارت دعوت", "عروسی، مراسم و رویدادهای کاری."),
         ("product-calendar", "تقویم رومیزی", "سه‌گوش، با طرحِ اختصاصیِ شما."),
@@ -147,51 +147,19 @@ SERVICES_INTRO = page_heading("خدماتِ چاپ", "کاغذ، اندازه و
 SERVICES_END = [FILE_SPECS, cta("فایل ندارید؟", "طراحی و آماده‌سازیِ فایلِ چاپ را هم انجام می‌دهیم. ایده‌تان را بگویید.")]
 
 
-def services_zigzag():
-    """Each family: its picture beside a heading and a list of its products, alternating sides."""
-    blocks = []
-    for i, (title, sub, img, items) in enumerate(FAMILIES):
-        picture = {"width": "44%", "blocks": [nested("Image", {"imageUrl": f"{U}{img}.jpg", "altText": title, "size": "full"})]}
-        text = {"width": "52%", "blocks": [
-            nested("Heading", {"text": title, "subtitle": sub, "level": "h2", "alignment": "start"}),
-            nested("ProductShowcase", {"layout": "list", "columns": 1,
-                                       "products": [{"title": t, "description": d} for _, t, d in items]}),
-        ]}
-        cols = [text, picture] if i % 2 else [picture, text]
-        blocks.append(("Columns", {"columnCount": 2, "gap": "3rem", "columns": cols}, style(SURFACE if i % 2 else "transparent")))
-    return [SERVICES_INTRO, *blocks, *SERVICES_END]
-
-
-def services_tabs():
-    """One tab per family; each tab shows its products as small picture cards."""
-    def tab(items):
-        cards = "".join(
-            f'<div class="bg-brand-surface border border-brand-border rounded-brand overflow-hidden">'
-            f'<img src="{U}{img}.jpg" alt="{t}" class="w-full h-40 object-cover" />'
-            f'<div class="p-4"><h3 class="font-semibold text-brand-navy mb-1">{t}</h3>'
-            f'<p class="text-sm text-brand-slate">{d}</p></div></div>' for img, t, d in items)
-        return f'<div class="grid grid-cols-1 sm:grid-cols-3 gap-5">{cards}</div>'
-    return [SERVICES_INTRO,
-            ("Tabs", {"tabs": [{"title": title, "content": tab(items)} for title, _, _, items in FAMILIES]}, style(paddingTop="1rem", paddingBottom="2rem")),
-            *SERVICES_END]
-
-
 def services_directory():
     """Each family as a row of compact cards: thumbnail, name, spec and a quote link."""
     blocks = [("CardGrid", {"sectionTitle": title, "columns": 3, "layout": "inline", "cards": [
         {"imageUrl": f"{U}{img}.jpg", "title": t, "description": d, "linkText": "استعلام قیمت", "linkUrl": "/fa/contact"}
-        for img, t, d in items]}, style(SURFACE if i % 2 else "transparent")) for i, (title, _, _, items) in enumerate(FAMILIES)]
+        for img, t, d in items]}, style(SURFACE if i % 2 else "transparent")) for i, (title, items) in enumerate(FAMILIES)]
     return [SERVICES_INTRO, *blocks, *SERVICES_END]
 
-
-SERVICE_LAYOUTS = {"zigzag": services_zigzag, "tabs": services_tabs, "directory": services_directory}
-SERVICES_LAYOUT = "zigzag"
 
 pages.append({
     "var": "@ServicesId", "title": "خدمات", "slug": "services",
     "metaTitle": "خدماتِ چاپ | نیک نگاه",
     "metaDesc": "خدماتِ چاپ دیجیتال نیک نگاه: کارت ویزیت، بروشور و کاتالوگ، بنر و استند، لیبل و بسته‌بندی، کارت دعوت و سربرگ.",
-    "blocks": SERVICE_LAYOUTS[SERVICES_LAYOUT](),
+    "blocks": services_directory(),
 })
 
 pages.append({
@@ -282,16 +250,20 @@ def sq(s):
     return "N'" + s.replace("'", "''") + "'"
 
 
+def var(token):
+    """SQL variable name for a token: MAP_EMBED_URL -> MapEmbedUrl."""
+    return "".join(w.capitalize() for w in token.split("_"))
+
+
 def tokenized(s):
     """T-SQL expression for a JSON literal, with {{TOKEN}} swapped for the matching JSON-escaped variable.
     {{N_TOKEN}} marks a token inside a nested block's JSON string, which needs escaping twice."""
     expr = sq(s)
     for t in TOKENS:
-        var = "@" + "".join(w.capitalize() for w in t.split("_")) + "Json"
         if "{{%s}}" % t in s:
-            expr = f"REPLACE({expr}, N'{{{{{t}}}}}', {var})"
+            expr = f"REPLACE({expr}, N'{{{{{t}}}}}', @{var(t)}Json)"
         if "{{N_%s}}" % t in s:
-            expr = f"REPLACE({expr}, N'{{{{N_{t}}}}}', {var}2)"
+            expr = f"REPLACE({expr}, N'{{{{N_{t}}}}}', @{var(t)}Json2)"
     return expr
 
 
@@ -348,11 +320,12 @@ DECLARE @InstagramUrl   nvarchar(400) = NULL;   -- e.g. N'https://instagram.com/
 DECLARE @TelegramUrl    nvarchar(400) = NULL;   -- e.g. N'https://t.me/nicnegah'
 DECLARE @SiteUrl        nvarchar(400) = NULL;   -- e.g. N'https://nicnegah.ir'
 DECLARE @ArchiveOtherPages bit = 1;             -- 1 = hide the CoderSight demo pages (Status = Archived; nothing is deleted)
-"""] + ["-- JSON-escaped copies (spliced into block JSON), and double-escaped ones for blocks nested in Columns"] + [
-        f"DECLARE @{''.join(w.capitalize() for w in t.split('_'))}Json nvarchar(2000) = STRING_ESCAPE(@{''.join(w.capitalize() for w in t.split('_'))}, 'json');"
-        for t in TOKENS] + [
-        f"DECLARE @{''.join(w.capitalize() for w in t.split('_'))}Json2 nvarchar(4000) = STRING_ESCAPE(@{''.join(w.capitalize() for w in t.split('_'))}Json, 'json');"
-        for t in TOKENS] + [f"""
+
+-- JSON-escaped copies (spliced into block JSON), and double-escaped ones for blocks nested in Columns
+"""]
+    L += [f"DECLARE @{var(t)}Json nvarchar(2000) = STRING_ESCAPE(@{var(t)}, 'json');" for t in TOKENS]
+    L += [f"DECLARE @{var(t)}Json2 nvarchar(4000) = STRING_ESCAPE(@{var(t)}Json, 'json');" for t in TOKENS]
+    L.append(f"""
 
 BEGIN TRANSACTION;
 
@@ -389,7 +362,7 @@ UPDATE SiteSettings SET
 -- ---------- Navigation ----------
 DELETE FROM NavMenuItems WHERE ParentId IS NOT NULL;
 DELETE FROM NavMenuItems;
-INSERT INTO NavMenuItems (Id, ParentId, Label, LabelFa, Url, OpenInNewTab, SortOrder, IsVisible) VALUES"""]
+INSERT INTO NavMenuItems (Id, ParentId, Label, LabelFa, Url, OpenInNewTab, SortOrder, IsVisible) VALUES""")
     L.append(",\n".join(f"    (NEWID(), NULL, N'{en}', {sq(fa)}, N'{url}', 0, {i}, {vis})"
                         for i, (en, fa, url, vis) in enumerate(NAV)) + ";")
     L.append(f"""
@@ -438,10 +411,6 @@ if __name__ == "__main__":
     print("wrote", out)
     if blocks_json:
         with open(blocks_json, "w", encoding="utf-8") as f:
-            out = {p["slug"] or "home": [{"blockType": bt, "data": preview(d), "styles": s} for bt, d, s in block_rows(p)]
-                   for p in pages}
-            for name, fn in SERVICE_LAYOUTS.items():  # every Services layout, for comparing them
-                out["services-" + name] = [{"blockType": bt, "data": preview(d), "styles": s}
-                                           for bt, d, s in block_rows({"blocks": fn()})]
-            json.dump(out, f, ensure_ascii=False, indent=1)
+            json.dump({p["slug"] or "home": [{"blockType": bt, "data": preview(d), "styles": s} for bt, d, s in block_rows(p)]
+                       for p in pages}, f, ensure_ascii=False, indent=1)
         print("wrote", blocks_json)

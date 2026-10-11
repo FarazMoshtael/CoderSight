@@ -30,6 +30,7 @@ DECLARE @SiteUrl        nvarchar(400) = NULL;   -- e.g. N'https://nicnegah.ir'
 DECLARE @ArchiveOtherPages bit = 1;             -- 1 = hide the CoderSight demo pages (Status = Archived; nothing is deleted)
 
 -- JSON-escaped copies (spliced into block JSON), and double-escaped ones for blocks nested in Columns
+
 DECLARE @AddressJson nvarchar(2000) = STRING_ESCAPE(@Address, 'json');
 DECLARE @HoursJson nvarchar(2000) = STRING_ESCAPE(@Hours, 'json');
 DECLARE @PhoneJson nvarchar(2000) = STRING_ESCAPE(@Phone, 'json');
@@ -93,18 +94,28 @@ INSERT INTO NavMenuItems (Id, ParentId, Label, LabelFa, Url, OpenInNewTab, SortO
 DELETE FROM Media WHERE Url LIKE N'/uploads/nicnegah-%';
 INSERT INTO Media (Id, FileName, Url, ContentType, SizeBytes, AltText, UploadedAt) VALUES
     (NEWID(), N'nicnegah-logo.png', N'/uploads/nicnegah-logo.png', 'image/png', 69972, N'لوگوی نیک نگاه', SYSUTCDATETIME()),
-    (NEWID(), N'nicnegah-favicon.png', N'/uploads/nicnegah-favicon.png', 'image/png', 26449, N'آیکونِ نیک نگاه', SYSUTCDATETIME()),
-    (NEWID(), N'nicnegah-og-image.png', N'/uploads/nicnegah-og-image.png', 'image/png', 694429, N'نیک نگاه، چاپ دیجیتال', SYSUTCDATETIME()),
-    (NEWID(), N'nicnegah-hero-bg.jpg', N'/uploads/nicnegah-hero-bg.jpg', 'image/jpeg', 281121, N'پس‌زمینه‌ی ترامِ چاپ', SYSUTCDATETIME()),
-    (NEWID(), N'nicnegah-service-business-cards.jpg', N'/uploads/nicnegah-service-business-cards.jpg', 'image/jpeg', 25781, N'کارت ویزیت', SYSUTCDATETIME()),
-    (NEWID(), N'nicnegah-service-brochure.jpg', N'/uploads/nicnegah-service-brochure.jpg', 'image/jpeg', 24730, N'بروشور و کاتالوگ', SYSUTCDATETIME()),
-    (NEWID(), N'nicnegah-service-banner.jpg', N'/uploads/nicnegah-service-banner.jpg', 'image/jpeg', 21262, N'بنر و استند', SYSUTCDATETIME()),
-    (NEWID(), N'nicnegah-service-labels.jpg', N'/uploads/nicnegah-service-labels.jpg', 'image/jpeg', 32395, N'لیبل و استیکر', SYSUTCDATETIME()),
-    (NEWID(), N'nicnegah-service-packaging.jpg', N'/uploads/nicnegah-service-packaging.jpg', 'image/jpeg', 21774, N'جعبه و بسته‌بندی', SYSUTCDATETIME()),
-    (NEWID(), N'nicnegah-service-invitations.jpg', N'/uploads/nicnegah-service-invitations.jpg', 'image/jpeg', 18967, N'کارت دعوت و سربرگ', SYSUTCDATETIME()),
-    (NEWID(), N'nicnegah-sample-sheets.jpg', N'/uploads/nicnegah-sample-sheets.jpg', 'image/jpeg', 37491, N'برگه‌های چاپ‌شده با علائمِ برش', SYSUTCDATETIME()),
-    (NEWID(), N'nicnegah-sample-swatches.jpg', N'/uploads/nicnegah-sample-swatches.jpg', 'image/jpeg', 52929, N'بادبزنِ رنگ', SYSUTCDATETIME()),
-    (NEWID(), N'nicnegah-sample-halftone.jpg', N'/uploads/nicnegah-sample-halftone.jpg', 'image/jpeg', 283311, N'ترامِ چاپ با رنگ‌های CMYK', SYSUTCDATETIME());
+    (NEWID(), N'nicnegah-favicon.png', N'/uploads/nicnegah-favicon.png', 'image/png', 20679, N'آیکونِ نیک نگاه', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-og-image.png', N'/uploads/nicnegah-og-image.png', 'image/png', 688659, N'نیک نگاه، چاپ دیجیتال', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-hero-bg.jpg', N'/uploads/nicnegah-hero-bg.jpg', 'image/jpeg', 275350, N'پس‌زمینه‌ی ترامِ چاپ', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-service-business-cards.jpg', N'/uploads/nicnegah-service-business-cards.jpg', 'image/jpeg', 17163, N'کارت ویزیت', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-service-brochure.jpg', N'/uploads/nicnegah-service-brochure.jpg', 'image/jpeg', 20570, N'بروشور و کاتالوگ', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-service-banner.jpg', N'/uploads/nicnegah-service-banner.jpg', 'image/jpeg', 13897, N'بنر و استند', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-service-labels.jpg', N'/uploads/nicnegah-service-labels.jpg', 'image/jpeg', 27707, N'لیبل و استیکر', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-service-packaging.jpg', N'/uploads/nicnegah-service-packaging.jpg', 'image/jpeg', 15808, N'جعبه و بسته‌بندی', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-service-invitations.jpg', N'/uploads/nicnegah-service-invitations.jpg', 'image/jpeg', 15232, N'کارت دعوت و سربرگ', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-sample-sheets.jpg', N'/uploads/nicnegah-sample-sheets.jpg', 'image/jpeg', 31720, N'برگه‌های چاپ‌شده با علائمِ برش', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-sample-swatches.jpg', N'/uploads/nicnegah-sample-swatches.jpg', 'image/jpeg', 40621, N'بادبزنِ رنگ', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-sample-halftone.jpg', N'/uploads/nicnegah-sample-halftone.jpg', 'image/jpeg', 309837, N'ترامِ چاپ با رنگ‌های CMYK', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-product-card-matte.jpg', N'/uploads/nicnegah-product-card-matte.jpg', 'image/jpeg', 17163, N'کارت ویزیت سلفون مات', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-product-card-foil.jpg', N'/uploads/nicnegah-product-card-foil.jpg', 'image/jpeg', 16508, N'کارت ویزیت طلاکوب', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-product-card-clear.jpg', N'/uploads/nicnegah-product-card-clear.jpg', 'image/jpeg', 17226, N'کارت ویزیت شفاف', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-product-catalog.jpg', N'/uploads/nicnegah-product-catalog.jpg', 'image/jpeg', 15783, N'کاتالوگ', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-product-poster.jpg', N'/uploads/nicnegah-product-poster.jpg', 'image/jpeg', 16146, N'پوستر', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-product-flex-banner.jpg', N'/uploads/nicnegah-product-flex-banner.jpg', 'image/jpeg', 15796, N'بنرِ فلکسی', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-product-x-stand.jpg', N'/uploads/nicnegah-product-x-stand.jpg', 'image/jpeg', 13410, N'استندِ X', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-product-bag.jpg', N'/uploads/nicnegah-product-bag.jpg', 'image/jpeg', 12773, N'ساک دستیِ کاغذی', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-product-letterhead.jpg', N'/uploads/nicnegah-product-letterhead.jpg', 'image/jpeg', 14631, N'سربرگ و پاکت', SYSUTCDATETIME()),
+    (NEWID(), N'nicnegah-product-calendar.jpg', N'/uploads/nicnegah-product-calendar.jpg', 'image/jpeg', 16933, N'تقویم رومیزی', SYSUTCDATETIME());
 
 -- ---------- Pages ----------
 DELETE FROM Pages WHERE Culture = 'fa' AND Slug IN (N'', N'services', N'about', N'contact');   -- their blocks cascade
@@ -149,22 +160,22 @@ INSERT INTO Pages (Id, Title, Slug, Status, MetaTitle, MetaDescription, Culture,
 VALUES (@ServicesId, N'خدمات', N'services', 'Published', N'خدماتِ چاپ | نیک نگاه', N'خدماتِ چاپ دیجیتال نیک نگاه: کارت ویزیت، بروشور و کاتالوگ، بنر و استند، لیبل و بسته‌بندی، کارت دعوت و سربرگ.', 'fa', NULL, SYSUTCDATETIME(), SYSUTCDATETIME(), SYSUTCDATETIME());
 INSERT INTO PageBlocks (Id, PageId, BlockType, SortOrder, Data, Styles) VALUES
     (NEWID(), @ServicesId, N'Heading', 0,
-     N'{"text":"خدماتِ چاپ","subtitle":"از یک بسته کارت ویزیت تا سفارشِ نمایشگاهی؛ برای هر کار، کاغذ و پوششِ مناسبش را پیشنهاد می‌دهیم.","level":"h1","alignment":"center"}',
+     N'{"text":"خدماتِ چاپ","subtitle":"کاغذ، اندازه و پوشش را با هم انتخاب می‌کنیم؛ برای قیمتِ دقیق، استعلام بگیرید.","level":"h1","alignment":"center"}',
      N'{"backgroundColor":"#0E252D","paddingTop":"2rem","paddingBottom":"2rem","paddingLeft":"0","paddingRight":"0","borderColor":"#16323B","borderWidth":"0 0 1px 0"}'),
-    (NEWID(), @ServicesId, N'ProductShowcase', 1,
-     N'{"sectionTitle":"کارت ویزیت","sectionSubtitle":"۱۰۰۰ عدد در هر سفارش؛ تیراژِ کمتر را هم بپرسید","layout":"list","columns":2,"products":[{"title":"سلفون مات یا براق","description":"۳۰۰ گرم، یک‌رو یا دورو.","badge":"پرسفارش"},{"title":"طلاکوب و نقره‌کوب","description":"طلاکوبِ داغ روی سلفون مات.","badge":""},{"title":"یووی موضعی","description":"براقیِ برجسته روی بخشی از طرح.","badge":""},{"title":"لبه‌گرد و برشِ فرم","description":"گوشه‌های گرد یا برش در شکلِ دلخواه.","badge":""},{"title":"کاغذهای فانتزی","description":"کتان، کرافت و مقواهای رنگی.","badge":""},{"title":"کارت ویزیت شفاف","description":"روی PVC شفاف یا مات.","badge":""}]}',
+    (NEWID(), @ServicesId, N'CardGrid', 1,
+     N'{"sectionTitle":"کارت ویزیت","columns":3,"layout":"inline","cards":[{"imageUrl":"/uploads/nicnegah-product-card-matte.jpg","title":"سلفون مات یا براق","description":"۳۰۰ گرم، یک‌رو یا دورو.","linkText":"استعلام قیمت","linkUrl":"/fa/contact"},{"imageUrl":"/uploads/nicnegah-product-card-foil.jpg","title":"طلاکوب و نقره‌کوب","description":"طلاکوبِ داغ روی سلفونِ مات.","linkText":"استعلام قیمت","linkUrl":"/fa/contact"},{"imageUrl":"/uploads/nicnegah-product-card-clear.jpg","title":"کارت شفاف","description":"روی PVC شفاف یا مات، ضدآب.","linkText":"استعلام قیمت","linkUrl":"/fa/contact"}]}',
      N'{"backgroundColor":"transparent","paddingTop":"0","paddingBottom":"0","paddingLeft":"0","paddingRight":"0"}'),
-    (NEWID(), @ServicesId, N'ProductShowcase', 2,
-     N'{"sectionTitle":"تبلیغاتِ چاپی","sectionSubtitle":"برای معرفیِ کسب‌وکار، نمایشگاه و رویداد","layout":"list","columns":2,"products":[{"title":"بروشور","description":"A4 و A5، تک‌برگ، دولت یا سه‌لت.","badge":""},{"title":"کاتالوگ","description":"از ۸ صفحه، صحافیِ منگنه یا چسب گرم.","badge":""},{"title":"تراکت","description":"A5 و A6، گلاسه، برای پخشِ گسترده.","badge":""},{"title":"پوستر","description":"A3 تا ۷۰×۱۰۰، روی گلاسه یا مات.","badge":""}]}',
+    (NEWID(), @ServicesId, N'CardGrid', 2,
+     N'{"sectionTitle":"تبلیغاتِ چاپی","columns":3,"layout":"inline","cards":[{"imageUrl":"/uploads/nicnegah-service-brochure.jpg","title":"بروشور","description":"A4 و A5، تک‌برگ، دولت یا سه‌لت.","linkText":"استعلام قیمت","linkUrl":"/fa/contact"},{"imageUrl":"/uploads/nicnegah-product-catalog.jpg","title":"کاتالوگ","description":"از ۸ صفحه، صحافیِ منگنه یا چسب گرم.","linkText":"استعلام قیمت","linkUrl":"/fa/contact"},{"imageUrl":"/uploads/nicnegah-product-poster.jpg","title":"پوستر","description":"A3 تا ۷۰×۱۰۰، روی گلاسه یا مات.","linkText":"استعلام قیمت","linkUrl":"/fa/contact"}]}',
      N'{"backgroundColor":"#0E252D","paddingTop":"0","paddingBottom":"0","paddingLeft":"0","paddingRight":"0"}'),
-    (NEWID(), @ServicesId, N'ProductShowcase', 3,
-     N'{"sectionTitle":"بنر و نمایشگاه","sectionSubtitle":"چاپِ عریض برای فضای باز و داخلی","layout":"list","columns":2,"products":[{"title":"بنرِ فلکسی","description":"هر اندازه، با دوخت و پرچ.","badge":""},{"title":"رول‌آپ","description":"۸۰×۲۰۰ و ۱۰۰×۲۰۰، با پایه و کیف.","badge":""},{"title":"استندِ X","description":"سبک و تاشو برای پیشخوان و نمایشگاه.","badge":""},{"title":"شاسی و فوم‌برد","description":"تابلوی سبک برای دیوار و ویترین.","badge":""}]}',
+    (NEWID(), @ServicesId, N'CardGrid', 3,
+     N'{"sectionTitle":"بنر و نمایشگاه","columns":3,"layout":"inline","cards":[{"imageUrl":"/uploads/nicnegah-service-banner.jpg","title":"رول‌آپ","description":"۸۰×۲۰۰ یا ۱۰۰×۲۰۰، با پایه و کیف.","linkText":"استعلام قیمت","linkUrl":"/fa/contact"},{"imageUrl":"/uploads/nicnegah-product-flex-banner.jpg","title":"بنرِ فلکسی","description":"هر اندازه، با دوخت و پرچ.","linkText":"استعلام قیمت","linkUrl":"/fa/contact"},{"imageUrl":"/uploads/nicnegah-product-x-stand.jpg","title":"استندِ X","description":"سبک و تاشو برای پیشخوان و نمایشگاه.","linkText":"استعلام قیمت","linkUrl":"/fa/contact"}]}',
      N'{"backgroundColor":"transparent","paddingTop":"0","paddingBottom":"0","paddingLeft":"0","paddingRight":"0"}'),
-    (NEWID(), @ServicesId, N'ProductShowcase', 4,
-     N'{"sectionTitle":"لیبل و بسته‌بندی","sectionSubtitle":"برای محصولی که در قفسه دیده شود","layout":"list","columns":2,"products":[{"title":"لیبلِ کاغذی و PVC","description":"رول یا برگ، برش‌خورده در هر شکل.","badge":""},{"title":"استیکرِ شفاف","description":"برای شیشه، ظرف و بسته‌بندی.","badge":""},{"title":"جعبه‌ی محصول","description":"تیراژِ کم، طراحیِ قالب با ما.","badge":"جدید"},{"title":"ساک دستیِ کاغذی","description":"با چاپِ لوگو، کرافت یا سفید.","badge":""}]}',
+    (NEWID(), @ServicesId, N'CardGrid', 4,
+     N'{"sectionTitle":"لیبل و بسته‌بندی","columns":3,"layout":"inline","cards":[{"imageUrl":"/uploads/nicnegah-service-labels.jpg","title":"لیبل و استیکر","description":"برش‌خورده در هر شکل، کاغذی، PVC یا شفاف.","linkText":"استعلام قیمت","linkUrl":"/fa/contact"},{"imageUrl":"/uploads/nicnegah-service-packaging.jpg","title":"جعبه‌ی محصول","description":"تیراژِ کم، با طراحیِ قالب و برش.","linkText":"استعلام قیمت","linkUrl":"/fa/contact"},{"imageUrl":"/uploads/nicnegah-product-bag.jpg","title":"ساک دستیِ کاغذی","description":"کرافت یا سفید، با چاپِ لوگو.","linkText":"استعلام قیمت","linkUrl":"/fa/contact"}]}',
      N'{"backgroundColor":"#0E252D","paddingTop":"0","paddingBottom":"0","paddingLeft":"0","paddingRight":"0"}'),
-    (NEWID(), @ServicesId, N'ProductShowcase', 5,
-     N'{"sectionTitle":"اداری و مراسم","sectionSubtitle":"اوراقِ اداری و کارت‌های مناسبتی","layout":"list","columns":2,"products":[{"title":"سربرگ و پاکت","description":"تحریرِ ۸۰ و ۱۰۰ گرم.","badge":""},{"title":"فاکتور و قبض","description":"تک‌برگ یا دسته‌ای، با شماره‌گذاری.","badge":""},{"title":"کارت دعوت","description":"عروسی، مراسم و رویدادهای کاری.","badge":""},{"title":"تقویم و سررسید","description":"رومیزی و دیواری، با طرحِ اختصاصی.","badge":""}]}',
+    (NEWID(), @ServicesId, N'CardGrid', 5,
+     N'{"sectionTitle":"اداری و مراسم","columns":3,"layout":"inline","cards":[{"imageUrl":"/uploads/nicnegah-product-letterhead.jpg","title":"سربرگ و پاکت","description":"تحریرِ ۸۰ یا ۱۰۰ گرم، با طرحِ اختصاصی.","linkText":"استعلام قیمت","linkUrl":"/fa/contact"},{"imageUrl":"/uploads/nicnegah-service-invitations.jpg","title":"کارت دعوت","description":"عروسی، مراسم و رویدادهای کاری.","linkText":"استعلام قیمت","linkUrl":"/fa/contact"},{"imageUrl":"/uploads/nicnegah-product-calendar.jpg","title":"تقویم رومیزی","description":"سه‌گوش، با طرحِ اختصاصیِ شما.","linkText":"استعلام قیمت","linkUrl":"/fa/contact"}]}',
      N'{"backgroundColor":"transparent","paddingTop":"0","paddingBottom":"0","paddingLeft":"0","paddingRight":"0"}'),
     (NEWID(), @ServicesId, N'CardGrid', 6,
      N'{"sectionTitle":"فایلِ آماده برای چاپ","columns":4,"layout":"inline","cards":[{"icon":"article","title":"PDF یا AI","description":"با فونت‌های تبدیل‌شده به منحنی."},{"icon":"sparkles","title":"۳۰۰ dpi","description":"تصاویر با وضوحِ اندازه‌ی واقعیِ چاپ."},{"icon":"category","title":"رنگِ CMYK","description":"نه RGB؛ تا رنگ‌ها جابه‌جا نشوند."},{"icon":"settings","title":"۳ میلی‌متر حاشیه","description":"از هر طرف، برای برشِ تمیز."}]}',
@@ -178,7 +189,7 @@ INSERT INTO Pages (Id, Title, Slug, Status, MetaTitle, MetaDescription, Culture,
 VALUES (@AboutId, N'درباره ما', N'about', 'Published', N'درباره ما | نیک نگاه', N'نیک نگاه، چاپخانه‌ی دیجیتال: دقت در رنگ، خوش‌قولی در تحویل و مشاوره در انتخابِ کاغذ و پوشش.', 'fa', NULL, SYSUTCDATETIME(), SYSUTCDATETIME(), SYSUTCDATETIME());
 INSERT INTO PageBlocks (Id, PageId, BlockType, SortOrder, Data, Styles) VALUES
     (NEWID(), @AboutId, N'Hero', 0,
-     N'{"layout":"split","eyebrow":"درباره‌ی نیک نگاه","title":"هر چاپ،\nبا یک نگاهِ دقیق","subtitle":"نیک نگاه چاپخانه‌ای دیجیتال است برای کسب‌وکارها و آدم‌هایی که می‌خواهند کارشان روی کاغذ همان‌طور دیده شود که روی صفحه طراحی کرده‌اند.","imageUrl":"/uploads/nicnegah-logo.png"}',
+     N'{"layout":"split","title":"هر چاپ،\nبا یک نگاهِ دقیق","subtitle":"نیک نگاه چاپخانه‌ای دیجیتال است برای کسب‌وکارها و آدم‌هایی که می‌خواهند کارشان روی کاغذ همان‌طور دیده شود که روی صفحه طراحی کرده‌اند.","imageUrl":"/uploads/nicnegah-logo.png"}',
      N'{"backgroundColor":"transparent","paddingTop":"0","paddingBottom":"0","paddingLeft":"0","paddingRight":"0"}'),
     (NEWID(), @AboutId, N'RichText', 1,
      N'{"content":"<p>اسمِ ما از همین‌جا آمده: نگاهِ نیک. پیش از چاپ، فایل را نگاه می‌کنیم؛ رنگ، وضوح و حاشیه‌ی برش را. اگر چیزی درست نیست، پیش از آن‌که کاغذ و وقتِ شما هدر برود، خبرتان می‌کنیم. بعد نمونه‌ی رنگ را می‌بینید و تا تأیید نکنید، چاپِ نهایی شروع نمی‌شود.</p>"}',
