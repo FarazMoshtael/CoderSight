@@ -107,53 +107,91 @@ pages = [{
 }]
 
 
-def catalog(title, sub, items, bg="transparent"):
-    """One product group: image cards with a starting price and a quote button."""
-    return ("ProductShowcase", {
-        "sectionTitle": title, "sectionSubtitle": sub, "layout": "cards", "columns": 3, "animation": "fade-up",
-        "products": [{"title": t, "description": d, "imageUrl": f"{U}{img}.jpg", "badge": badge, "price": "از [ … ] تومان",
-                      "linkText": "استعلام قیمت", "linkUrl": "/fa/contact"} for img, t, d, badge in items]}, style(bg))
+# Product families on the Services page: (title, subtitle, family image, [(image, product, spec)]).
+FAMILIES = [
+    ("کارت ویزیت", "۱۰۰۰ عدد در هر سفارش؛ تیراژِ کمتر را هم بپرسید", "service-business-cards", [
+        ("product-card-matte", "سلفون مات یا براق", "۳۰۰ گرم، یک‌رو یا دورو."),
+        ("product-card-foil", "طلاکوب و نقره‌کوب", "طلاکوبِ داغ روی سلفونِ مات."),
+        ("product-card-clear", "کارت شفاف", "روی PVC شفاف یا مات، ضدآب."),
+    ]),
+    ("تبلیغاتِ چاپی", "برای معرفیِ کسب‌وکار، نمایشگاه و رویداد", "service-brochure", [
+        ("service-brochure", "بروشور", "A4 و A5، تک‌برگ، دولت یا سه‌لت."),
+        ("product-catalog", "کاتالوگ", "از ۸ صفحه، صحافیِ منگنه یا چسب گرم."),
+        ("product-poster", "پوستر", "A3 تا ۷۰×۱۰۰، روی گلاسه یا مات."),
+    ]),
+    ("بنر و نمایشگاه", "چاپِ عریض برای فضای باز و داخلی", "service-banner", [
+        ("service-banner", "رول‌آپ", "۸۰×۲۰۰ یا ۱۰۰×۲۰۰، با پایه و کیف."),
+        ("product-flex-banner", "بنرِ فلکسی", "هر اندازه، با دوخت و پرچ."),
+        ("product-x-stand", "استندِ X", "سبک و تاشو برای پیشخوان و نمایشگاه."),
+    ]),
+    ("لیبل و بسته‌بندی", "برای محصولی که در قفسه دیده شود", "service-packaging", [
+        ("service-labels", "لیبل و استیکر", "برش‌خورده در هر شکل، کاغذی، PVC یا شفاف."),
+        ("service-packaging", "جعبه‌ی محصول", "تیراژِ کم، با طراحیِ قالب و برش."),
+        ("product-bag", "ساک دستیِ کاغذی", "کرافت یا سفید، با چاپِ لوگو."),
+    ]),
+    ("اداری و مراسم", "اوراقِ اداری و کارت‌های مناسبتی", "service-invitations", [
+        ("product-letterhead", "سربرگ و پاکت", "تحریرِ ۸۰ یا ۱۰۰ گرم، با طرحِ اختصاصی."),
+        ("service-invitations", "کارت دعوت", "عروسی، مراسم و رویدادهای کاری."),
+        ("product-calendar", "تقویم رومیزی", "سه‌گوش، با طرحِ اختصاصیِ شما."),
+    ]),
+]
 
+FILE_SPECS = ("CardGrid", {"sectionTitle": "فایلِ آماده برای چاپ", "columns": 4, "layout": "inline", "cards": [
+    {"icon": "article", "title": "PDF یا AI", "description": "با فونت‌های تبدیل‌شده به منحنی."},
+    {"icon": "sparkles", "title": "۳۰۰ dpi", "description": "تصاویر با وضوحِ اندازه‌ی واقعیِ چاپ."},
+    {"icon": "category", "title": "رنگِ CMYK", "description": "نه RGB؛ تا رنگ‌ها جابه‌جا نشوند."},
+    {"icon": "settings", "title": "۳ میلی‌متر حاشیه", "description": "از هر طرف، برای برشِ تمیز."},
+]}, style(SURFACE, borderColor=LINE, borderWidth="1px 0"))
+
+SERVICES_INTRO = page_heading("خدماتِ چاپ", "کاغذ، اندازه و پوشش را با هم انتخاب می‌کنیم؛ برای قیمتِ دقیق، استعلام بگیرید.")
+SERVICES_END = [FILE_SPECS, cta("فایل ندارید؟", "طراحی و آماده‌سازیِ فایلِ چاپ را هم انجام می‌دهیم. ایده‌تان را بگویید.")]
+
+
+def services_zigzag():
+    """Each family: its picture beside a heading and a list of its products, alternating sides."""
+    blocks = []
+    for i, (title, sub, img, items) in enumerate(FAMILIES):
+        picture = {"width": "44%", "blocks": [nested("Image", {"imageUrl": f"{U}{img}.jpg", "altText": title, "size": "full"})]}
+        text = {"width": "52%", "blocks": [
+            nested("Heading", {"text": title, "subtitle": sub, "level": "h2", "alignment": "start"}),
+            nested("ProductShowcase", {"layout": "list", "columns": 1,
+                                       "products": [{"title": t, "description": d} for _, t, d in items]}),
+        ]}
+        cols = [text, picture] if i % 2 else [picture, text]
+        blocks.append(("Columns", {"columnCount": 2, "gap": "3rem", "columns": cols}, style(SURFACE if i % 2 else "transparent")))
+    return [SERVICES_INTRO, *blocks, *SERVICES_END]
+
+
+def services_tabs():
+    """One tab per family; each tab shows its products as small picture cards."""
+    def tab(items):
+        cards = "".join(
+            f'<div class="bg-brand-surface border border-brand-border rounded-brand overflow-hidden">'
+            f'<img src="{U}{img}.jpg" alt="{t}" class="w-full h-40 object-cover" />'
+            f'<div class="p-4"><h3 class="font-semibold text-brand-navy mb-1">{t}</h3>'
+            f'<p class="text-sm text-brand-slate">{d}</p></div></div>' for img, t, d in items)
+        return f'<div class="grid grid-cols-1 sm:grid-cols-3 gap-5">{cards}</div>'
+    return [SERVICES_INTRO,
+            ("Tabs", {"tabs": [{"title": title, "content": tab(items)} for title, _, _, items in FAMILIES]}, style(paddingTop="1rem", paddingBottom="2rem")),
+            *SERVICES_END]
+
+
+def services_directory():
+    """Each family as a row of compact cards: thumbnail, name, spec and a quote link."""
+    blocks = [("CardGrid", {"sectionTitle": title, "columns": 3, "layout": "inline", "cards": [
+        {"imageUrl": f"{U}{img}.jpg", "title": t, "description": d, "linkText": "استعلام قیمت", "linkUrl": "/fa/contact"}
+        for img, t, d in items]}, style(SURFACE if i % 2 else "transparent")) for i, (title, _, _, items) in enumerate(FAMILIES)]
+    return [SERVICES_INTRO, *blocks, *SERVICES_END]
+
+
+SERVICE_LAYOUTS = {"zigzag": services_zigzag, "tabs": services_tabs, "directory": services_directory}
+SERVICES_LAYOUT = "zigzag"
 
 pages.append({
     "var": "@ServicesId", "title": "خدمات", "slug": "services",
     "metaTitle": "خدماتِ چاپ | نیک نگاه",
     "metaDesc": "خدماتِ چاپ دیجیتال نیک نگاه: کارت ویزیت، بروشور و کاتالوگ، بنر و استند، لیبل و بسته‌بندی، کارت دعوت و سربرگ.",
-    "blocks": [
-        page_heading("خدماتِ چاپ", "هر محصول را با کاغذ، اندازه و پوششِ دلخواه چاپ می‌کنیم. قیمتِ پایه را ببینید و برای قیمتِ دقیق استعلام بگیرید."),
-        catalog("کارت ویزیت", "۱۰۰۰ عدد در هر سفارش؛ تیراژِ کمتر را هم بپرسید", [
-            ("product-card-matte", "کارت ویزیت سلفون مات", "۳۰۰ گرم، یک‌رو یا دورو، با سلفونِ مات یا براق.", "پرسفارش"),
-            ("product-card-foil", "کارت ویزیت طلاکوب", "طلاکوب یا نقره‌کوبِ داغ روی سلفونِ مات.", ""),
-            ("product-card-clear", "کارت ویزیت شفاف", "روی PVC شفاف یا مات، ضدآب و بادوام.", ""),
-        ]),
-        catalog("تبلیغاتِ چاپی", "برای معرفیِ کسب‌وکار، نمایشگاه و رویداد", [
-            ("service-brochure", "بروشور سه‌لت", "A4 تاشده، گلاسه‌ی ۱۳۵ یا ۱۷۰ گرم.", ""),
-            ("product-catalog", "کاتالوگ", "از ۸ صفحه، صحافیِ منگنه یا چسب گرم.", ""),
-            ("product-poster", "پوستر", "A3 تا ۷۰×۱۰۰، روی گلاسه یا مات.", ""),
-        ], SURFACE),
-        catalog("بنر و نمایشگاه", "چاپِ عریض برای فضای باز و داخلی", [
-            ("service-banner", "رول‌آپ", "۸۰×۲۰۰ یا ۱۰۰×۲۰۰، با پایه و کیفِ حمل.", "پرسفارش"),
-            ("product-flex-banner", "بنرِ فلکسی", "هر اندازه، با دوخت و پرچ برای نصب.", ""),
-            ("product-x-stand", "استندِ X", "سبک و تاشو برای پیشخوان و نمایشگاه.", ""),
-        ]),
-        catalog("لیبل و بسته‌بندی", "برای محصولی که در قفسه دیده شود", [
-            ("service-labels", "لیبل و استیکر", "برش‌خورده در هر شکل، کاغذی، PVC یا شفاف.", ""),
-            ("service-packaging", "جعبه‌ی محصول", "تیراژِ کم، با طراحیِ قالب و برش.", "جدید"),
-            ("product-bag", "ساک دستیِ کاغذی", "کرافت یا سفید، با چاپِ لوگو.", ""),
-        ], SURFACE),
-        catalog("اداری و مراسم", "اوراقِ اداری و کارت‌های مناسبتی", [
-            ("product-letterhead", "سربرگ و پاکت", "تحریرِ ۸۰ یا ۱۰۰ گرم، با طرحِ اختصاصی.", ""),
-            ("service-invitations", "کارت دعوت", "عروسی، مراسم و رویدادهای کاری، با پاکت.", ""),
-            ("product-calendar", "تقویم رومیزی", "سه‌گوش، با طرحِ اختصاصیِ شما.", ""),
-        ]),
-        ("CardGrid", {"sectionTitle": "فایلِ آماده برای چاپ", "columns": 4, "layout": "inline", "cards": [
-            {"icon": "article", "title": "PDF یا AI", "description": "با فونت‌های تبدیل‌شده به منحنی."},
-            {"icon": "sparkles", "title": "۳۰۰ dpi", "description": "تصاویر با وضوحِ اندازه‌ی واقعیِ چاپ."},
-            {"icon": "category", "title": "رنگِ CMYK", "description": "نه RGB؛ تا رنگ‌ها جابه‌جا نشوند."},
-            {"icon": "settings", "title": "۳ میلی‌متر حاشیه", "description": "از هر طرف، برای برشِ تمیز."},
-        ]}, style(SURFACE, borderColor=LINE, borderWidth="1px 0")),
-        cta("فایل ندارید؟", "طراحی و آماده‌سازیِ فایلِ چاپ را هم انجام می‌دهیم. ایده‌تان را بگویید."),
-    ],
+    "blocks": SERVICE_LAYOUTS[SERVICES_LAYOUT](),
 })
 
 pages.append({
@@ -400,6 +438,10 @@ if __name__ == "__main__":
     print("wrote", out)
     if blocks_json:
         with open(blocks_json, "w", encoding="utf-8") as f:
-            json.dump({p["slug"] or "home": [{"blockType": bt, "data": preview(d), "styles": s} for bt, d, s in block_rows(p)]
-                       for p in pages}, f, ensure_ascii=False, indent=1)
+            out = {p["slug"] or "home": [{"blockType": bt, "data": preview(d), "styles": s} for bt, d, s in block_rows(p)]
+                   for p in pages}
+            for name, fn in SERVICE_LAYOUTS.items():  # every Services layout, for comparing them
+                out["services-" + name] = [{"blockType": bt, "data": preview(d), "styles": s}
+                                           for bt, d, s in block_rows({"blocks": fn()})]
+            json.dump(out, f, ensure_ascii=False, indent=1)
         print("wrote", blocks_json)

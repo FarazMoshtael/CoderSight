@@ -9,7 +9,8 @@ SS = 2  # supersample
 
 CYAN, TEAL, INK = (0, 255, 234), (0, 168, 160), (11, 37, 48)
 MAG, YEL, PAPER, WHITE = (230, 0, 126), (255, 212, 0), (246, 244, 239), (255, 255, 255)
-SOFT = {"cyan": (214, 247, 244), "mag": (251, 226, 239), "yel": (255, 246, 207), "paper": (238, 236, 230)}
+# Night Ink: dark tinted grounds so the images sit on the dark site
+SOFT = {"cyan": (16, 52, 60), "mag": (52, 24, 46), "yel": (50, 45, 22), "paper": (26, 40, 47)}
 
 
 def canvas(w, h, bg):
@@ -161,7 +162,7 @@ def invitations():
 
 def swatches():
     W, H = 1200, 800
-    im = canvas(W, H, (233, 238, 238))
+    im = canvas(W, H, SOFT["paper"])
     cols = [INK, (0, 120, 140), TEAL, CYAN, (120, 230, 120), YEL, (255, 140, 0), MAG, (140, 0, 120)]
     pivot = (600 * SS, 690 * SS)
     for i, c in enumerate(cols):
@@ -252,7 +253,7 @@ def catalog():
 
 
 def poster():
-    im = canvas(800, 600, (226, 232, 232))
+    im = canvas(800, 600, SOFT["paper"])
     shadow_rect(im, 270, 70, 530, 530, WHITE, 2)
     d = ImageDraw.Draw(im)
     rect(d, 290, 90, 510, 510, INK)
@@ -372,7 +373,7 @@ if __name__ == "__main__":
     random.seed(4)
     business_cards(); brochure(); banner(); labels(); packaging(); invitations()
     swatches(); sheets()
-    halftone("sample-halftone.jpg", 1200, 800, PAPER, [(CYAN, 380, 380, 520), (MAG, 860, 300, 420), (YEL, 700, 700, 380)], 11, 26)
+    halftone("sample-halftone.jpg", 1200, 800, (14, 30, 36), [(CYAN, 380, 380, 520), (MAG, 860, 300, 420), (YEL, 700, 700, 380)], 11, 26)
     halftone("hero-bg.jpg", 1600, 900, INK, [(TEAL, 1250, 300, 750), ((120, 0, 70), 250, 820, 600)], 9, 24)
     business_cards("product-card-matte.jpg", SOFT["cyan"], (INK, WHITE, TEAL), CYAN, WHITE)
     business_cards("product-card-foil.jpg", (40, 46, 52), ((20, 24, 28), (248, 246, 240), INK), GOLD, GOLD)
