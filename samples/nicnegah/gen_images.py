@@ -36,10 +36,10 @@ def rot_rect(cx, cy, w, h, ang):
     return [(cx + x * math.cos(a) - y * math.sin(a), cy + x * math.sin(a) + y * math.cos(a)) for x, y in pts]
 
 
-def business_cards():
+def business_cards(name="service-business-cards.jpg", bg=SOFT["cyan"], cols=(INK, WHITE, TEAL), dot=CYAN, ink=WHITE):
     W, H = 800, 600
-    im = canvas(W, H, SOFT["cyan"])
-    for i, (ang, col, dx, dy) in enumerate([(-14, INK, -70, 30), (-4, WHITE, 0, 0), (8, TEAL, 70, -40)]):
+    im = canvas(W, H, bg)
+    for i, (ang, col, dx, dy) in enumerate([(-14, cols[0], -70, 30), (-4, cols[1], 0, 0), (8, cols[2], 70, -40)]):
         cx, cy, w, h = (400 + dx) * SS, (300 + dy) * SS, 340 * SS, 200 * SS
         def f(d, mask, off, cx=cx, cy=cy, w=w, h=h, ang=ang, col=col):
             pts = [(x + off[0] * SS, y + off[1] * SS) for x, y in rot_rect(cx, cy, w, h, ang)]
@@ -53,10 +53,10 @@ def business_cards():
         return (cx + x * SS * math.cos(a) - y * SS * math.sin(a), cy + x * SS * math.sin(a) + y * SS * math.cos(a))
     r = 26 * SS
     c = p(110, -45)
-    d.ellipse([c[0] - r, c[1] - r, c[0] + r, c[1] + r], fill=CYAN)
+    d.ellipse([c[0] - r, c[1] - r, c[0] + r, c[1] + r], fill=dot)
     for k, ln in enumerate([170, 120, 90]):
-        d.line([p(-140, 20 + k * 22), p(-140 + ln, 20 + k * 22)], fill=WHITE, width=7 * SS)
-    save(im, "service-business-cards.jpg", W, H)
+        d.line([p(-140, 20 + k * 22), p(-140 + ln, 20 + k * 22)], fill=ink, width=7 * SS)
+    save(im, name, W, H)
 
 
 def brochure():
@@ -218,6 +218,123 @@ def halftone(name, W, H, bg, colors, max_r, step):
     save(im, name, W, H)
 
 
+GOLD, CLEAR = (212, 175, 55), (200, 236, 233)
+
+
+def poly(d, pts, fill):
+    d.polygon([(x * SS, y * SS) for x, y in pts], fill=fill)
+
+
+def rect(d, x0, y0, x1, y1, fill, r=0):
+    d.rounded_rectangle([x0 * SS, y0 * SS, x1 * SS, y1 * SS], r * SS, fill=fill)
+
+
+def lines(d, x, y, lens, col, gap=24, w=7):
+    for k, ln in enumerate(lens):
+        d.line([(x * SS, (y + k * gap) * SS), ((x + ln) * SS, (y + k * gap) * SS)], fill=col, width=w * SS)
+
+
+def shadow_rect(im, x0, y0, x1, y1, col, r=6):
+    shadowed(im, lambda d, m, o: d.rounded_rectangle([(x0 + o[0]) * SS, (y0 + o[1]) * SS, (x1 + o[0]) * SS, (y1 + o[1]) * SS],
+                                                     r * SS, fill=255 if m else col))
+
+
+def catalog():
+    im = canvas(800, 600, SOFT["yel"])
+    for k in range(3):
+        shadow_rect(im, 250 + k * 18, 110 - k * 14, 530 + k * 18, 490 - k * 14, WHITE if k < 2 else INK, 4)
+    d = ImageDraw.Draw(im)
+    rect(d, 286, 82, 566, 300, CYAN)
+    d.ellipse([380 * SS, 140 * SS, 470 * SS, 230 * SS], fill=INK)
+    lines(d, 310, 340, [200, 150, 180], WHITE, 30, 9)
+    rect(d, 286, 82, 298, 462, (5, 20, 26))
+    save(im, "product-catalog.jpg", 800, 600)
+
+
+def poster():
+    im = canvas(800, 600, (226, 232, 232))
+    shadow_rect(im, 270, 70, 530, 530, WHITE, 2)
+    d = ImageDraw.Draw(im)
+    rect(d, 290, 90, 510, 510, INK)
+    for k, c in enumerate([CYAN, MAG, YEL]):
+        x = 340 + k * 60
+        d.ellipse([(x - 50) * SS, (230 - 50) * SS, (x + 50) * SS, (230 + 50) * SS], fill=c)
+    lines(d, 320, 360, [160, 120, 140], WHITE, 32, 10)
+    save(im, "product-poster.jpg", 800, 600)
+
+
+def flex_banner():
+    im = canvas(800, 600, SOFT["cyan"])
+    d = ImageDraw.Draw(im)
+    for x in (110, 690):
+        rect(d, x - 6, 90, x + 6, 540, (110, 120, 125), 3)
+    shadow_rect(im, 116, 150, 684, 380, INK, 2)
+    d = ImageDraw.Draw(im)
+    rect(d, 116, 150, 300, 380, CYAN)
+    d.ellipse([170 * SS, 220 * SS, 250 * SS, 300 * SS], fill=INK)
+    lines(d, 340, 220, [280, 220, 250], WHITE, 34, 11)
+    for x in (130, 670):
+        for y in (164, 366):
+            d.ellipse([(x - 6) * SS, (y - 6) * SS, (x + 6) * SS, (y + 6) * SS], fill=(200, 205, 210))
+    save(im, "product-flex-banner.jpg", 800, 600)
+
+
+def x_stand():
+    im = canvas(800, 600, SOFT["mag"])
+    d = ImageDraw.Draw(im)
+    for a, b in [((260, 560), (540, 60)), ((540, 560), (260, 60))]:
+        d.line([(a[0] * SS, a[1] * SS), (b[0] * SS, b[1] * SS)], fill=(120, 120, 128), width=8 * SS)
+    shadow_rect(im, 300, 70, 500, 520, WHITE, 2)
+    d = ImageDraw.Draw(im)
+    rect(d, 300, 70, 500, 250, MAG)
+    d.ellipse([360 * SS, 120 * SS, 440 * SS, 200 * SS], fill=WHITE)
+    lines(d, 330, 300, [140, 110, 140, 90], (190, 190, 196), 34, 9)
+    save(im, "product-x-stand.jpg", 800, 600)
+
+
+def bag():
+    im = canvas(800, 600, SOFT["paper"])
+    body = [(250, 200), (550, 200), (580, 520), (220, 520)]
+    shadowed(im, lambda d, m, o: d.polygon([((x + o[0]) * SS, (y + o[1]) * SS) for x, y in body], fill=255 if m else (196, 160, 112)))
+    d = ImageDraw.Draw(im)
+    for cx in (330, 470):
+        d.arc([(cx - 50) * SS, 110 * SS, (cx + 50) * SS, 290 * SS], 180, 360, fill=INK, width=9 * SS)
+    poly(d, [(250, 200), (550, 200), (556, 250), (244, 250)], (176, 140, 94))
+    d.ellipse([350 * SS, 310 * SS, 450 * SS, 410 * SS], fill=INK)
+    d.ellipse([378 * SS, 338 * SS, 422 * SS, 382 * SS], fill=CYAN)
+    save(im, "product-bag.jpg", 800, 600)
+
+
+def letterhead():
+    im = canvas(800, 600, SOFT["cyan"])
+    shadow_rect(im, 170, 300, 520, 500, (240, 240, 236), 2)
+    shadow_rect(im, 360, 60, 620, 540, WHITE, 2)
+    d = ImageDraw.Draw(im)
+    d.ellipse([388 * SS, 88 * SS, 432 * SS, 132 * SS], fill=TEAL)
+    lines(d, 450, 100, [120], INK, 0, 8)
+    lines(d, 390, 190, [200, 200, 170, 200, 120, 190, 150], (205, 210, 212), 34, 7)
+    rect(d, 360, 520, 620, 540, TEAL)
+    d.ellipse([196 * SS, 326 * SS, 226 * SS, 356 * SS], fill=TEAL)
+    save(im, "product-letterhead.jpg", 800, 600)
+
+
+def desk_calendar():
+    im = canvas(800, 600, SOFT["yel"])
+    front = [(220, 470), (580, 470), (530, 150), (270, 150)]
+    shadowed(im, lambda d, m, o: d.polygon([((x + o[0]) * SS, (y + o[1]) * SS) for x, y in front], fill=255 if m else WHITE))
+    d = ImageDraw.Draw(im)
+    poly(d, [(270, 150), (530, 150), (540, 215), (260, 215)], MAG)
+    for k in range(9):
+        x = 300 + k * 25
+        d.ellipse([(x - 6) * SS, 138 * SS, (x + 6) * SS, 162 * SS], fill=(150, 150, 158))
+    for r in range(4):
+        for c in range(7):
+            x, y = 285 + c * 34 - r * 3, 250 + r * 50
+            col = CYAN if (r, c) == (1, 4) else (215, 218, 222)
+            rect(d, x, y, x + 22, y + 22, col, 4)
+    save(im, "product-calendar.jpg", 800, 600)
+
+
 def favicon():
     """Logo on a dark rounded square, so it reads on light and dark browser tabs."""
     N = 512
@@ -257,6 +374,10 @@ if __name__ == "__main__":
     swatches(); sheets()
     halftone("sample-halftone.jpg", 1200, 800, PAPER, [(CYAN, 380, 380, 520), (MAG, 860, 300, 420), (YEL, 700, 700, 380)], 11, 26)
     halftone("hero-bg.jpg", 1600, 900, INK, [(TEAL, 1250, 300, 750), ((120, 0, 70), 250, 820, 600)], 9, 24)
+    business_cards("product-card-matte.jpg", SOFT["cyan"], (INK, WHITE, TEAL), CYAN, WHITE)
+    business_cards("product-card-foil.jpg", (40, 46, 52), ((20, 24, 28), (248, 246, 240), INK), GOLD, GOLD)
+    business_cards("product-card-clear.jpg", SOFT["paper"], ((214, 224, 226), CLEAR, (230, 246, 244)), TEAL, (120, 160, 165))
+    catalog(); poster(); flex_banner(); x_stand(); bag(); letterhead(); desk_calendar()
     favicon()
     if len(sys.argv) == 3:  # python3 gen_images.py Vazirmatn-ExtraBold.ttf Vazirmatn-Regular.ttf
         og_image(sys.argv[1], sys.argv[2])
