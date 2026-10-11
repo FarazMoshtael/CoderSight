@@ -53,3 +53,4 @@ Shown in [brackets] on the pages:
 - The contact form sends only name, email, subject and message, so the phone number goes in the message, and print files are sent by email or Telegram.
 - Contact form and newsletter status messages ("Sending...") are still in English.
 - Footer social links are labelled in English (Instagram, Telegram).
+- The Services page uses the Tabs block, which stores each tab as HTML. To change a product there, edit that tab's HTML in the admin (or `FAMILIES` in `gen_seed.py` and re-run it).

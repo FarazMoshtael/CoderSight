@@ -147,19 +147,27 @@ SERVICES_INTRO = page_heading("خدماتِ چاپ", "کاغذ، اندازه و
 SERVICES_END = [FILE_SPECS, cta("فایل ندارید؟", "طراحی و آماده‌سازیِ فایلِ چاپ را هم انجام می‌دهیم. ایده‌تان را بگویید.")]
 
 
-def services_directory():
-    """Each family as a row of compact cards: thumbnail, name, spec and a quote link."""
-    blocks = [("CardGrid", {"sectionTitle": title, "columns": 3, "layout": "inline", "cards": [
-        {"imageUrl": f"{U}{img}.jpg", "title": t, "description": d, "linkText": "استعلام قیمت", "linkUrl": "/fa/contact"}
-        for img, t, d in items]}, style(SURFACE if i % 2 else "transparent")) for i, (title, items) in enumerate(FAMILIES)]
-    return [SERVICES_INTRO, *blocks, *SERVICES_END]
+def services_tabs():
+    """One tab per family; each tab shows its products as picture cards.
+    The Tabs block stores a tab as HTML, so the cards are Tailwind markup using the brand colour classes."""
+    def tab(items):
+        cards = "".join(
+            f'<div class="bg-brand-surface border border-brand-border rounded-brand overflow-hidden">'
+            f'<img src="{U}{img}.jpg" alt="{t}" class="w-full h-40 object-cover" />'
+            f'<div class="p-4"><h3 class="font-semibold text-brand-navy mb-1">{t}</h3>'
+            f'<p class="text-sm text-brand-slate">{d}</p></div></div>' for img, t, d in items)
+        return f'<div class="grid grid-cols-1 sm:grid-cols-3 gap-5">{cards}</div>'
+    return [SERVICES_INTRO,
+            ("Tabs", {"tabs": [{"title": title, "content": tab(items)} for title, items in FAMILIES]},
+             style(paddingTop="1rem", paddingBottom="2rem")),
+            *SERVICES_END]
 
 
 pages.append({
     "var": "@ServicesId", "title": "خدمات", "slug": "services",
     "metaTitle": "خدماتِ چاپ | نیک نگاه",
     "metaDesc": "خدماتِ چاپ دیجیتال نیک نگاه: کارت ویزیت، بروشور و کاتالوگ، بنر و استند، لیبل و بسته‌بندی، کارت دعوت و سربرگ.",
-    "blocks": services_directory(),
+    "blocks": services_tabs(),
 })
 
 pages.append({
