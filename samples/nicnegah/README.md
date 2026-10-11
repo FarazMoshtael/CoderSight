@@ -2,7 +2,7 @@
 
 A Persian, right-to-left setup for a digital printing shop, built only from CoderSight blocks.
 It creates four pages (home, services, about, contact) in the Night Ink look: a dark page, the logo's
-bright cyan as the primary colour, Vazirmatn text and a halftone hero.
+bright cyan as the primary colour, Vazirmatn text and the cyan eye logo as the home page hero.
 
 ## What's here
 
@@ -37,8 +37,8 @@ mode stays on with `fa` as the default and only culture; the language toggle hid
 ## Images
 
 Everything in `uploads/` except `nicnegah-logo.png` is a drawn placeholder. Replace a file with a real
-photo under the same name and the pages pick it up; no SQL change is needed. The hero background is
-`nicnegah-hero-bg.jpg`. Service and product images are 800×600, samples 1200×800.
+photo under the same name and the pages pick it up; no SQL change is needed. The About page hero
+background is `nicnegah-hero-bg.jpg`. Service and product images are 800×600, samples 1200×800.
 
 ## Placeholders to replace
 

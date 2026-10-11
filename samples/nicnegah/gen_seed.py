@@ -65,12 +65,11 @@ pages = [{
     "metaDesc": "نیک نگاه، چاپ دیجیتال: کارت ویزیت، بروشور، بنر، لیبل و بسته‌بندی با رنگِ دقیق و تحویلِ سریع.",
     "blocks": [
         ("Hero", {
-            "layout": "centered",
-            "eyebrow": "چاپ دیجیتال نیک نگاه",
-            "title": "چاپی که به چشم می‌آید",
+            "layout": "split",
+            "title": "چاپی که\nبه چشم می‌آید",
             "subtitle": "از کارت ویزیت و بروشور تا بنر و بسته‌بندی. فایلتان را بفرستید، نمونه‌ی رنگ را ببینید و کارِ چاپ‌شده را سرِ وقت تحویل بگیرید.",
             "buttonText": "استعلام قیمت", "buttonLink": "/fa/contact",
-            "backgroundColor": BG, "backgroundImageUrl": f"{U}hero-bg.jpg",
+            "imageUrl": f"{U}logo.png",
         }, style()),
         ("Stats", {"backgroundColor": SURFACE, "stats": [
             {"value": "[۱۲]+", "label": "سال تجربه"},
@@ -176,10 +175,11 @@ pages.append({
     "metaDesc": "نیک نگاه، چاپخانه‌ی دیجیتال: دقت در رنگ، خوش‌قولی در تحویل و مشاوره در انتخابِ کاغذ و پوشش.",
     "blocks": [
         ("Hero", {
-            "layout": "split",
-            "title": "هر چاپ،\nبا یک نگاهِ دقیق",
+            "layout": "centered",
+            "eyebrow": "درباره نیک نگاه",
+            "title": "هر چاپ، با یک نگاهِ دقیق",
             "subtitle": "نیک نگاه چاپخانه‌ای دیجیتال است برای کسب‌وکارها و آدم‌هایی که می‌خواهند کارشان روی کاغذ همان‌طور دیده شود که روی صفحه طراحی کرده‌اند.",
-            "imageUrl": f"{U}logo.png",
+            "backgroundColor": BG, "backgroundImageUrl": f"{U}hero-bg.jpg",
         }, style()),
         ("RichText", {"content": (
             "<p>اسمِ ما از همین‌جا آمده: نگاهِ نیک. پیش از چاپ، فایل را نگاه می‌کنیم؛ رنگ، وضوح و حاشیه‌ی برش را. "

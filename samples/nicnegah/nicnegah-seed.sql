@@ -131,7 +131,7 @@ INSERT INTO Pages (Id, Title, Slug, Status, MetaTitle, MetaDescription, Culture,
 VALUES (@HomeId, N'خانه', N'', 'Published', N'نیک نگاه | چاپ دیجیتال', N'نیک نگاه، چاپ دیجیتال: کارت ویزیت، بروشور، بنر، لیبل و بسته‌بندی با رنگِ دقیق و تحویلِ سریع.', 'fa', NULL, SYSUTCDATETIME(), SYSUTCDATETIME(), SYSUTCDATETIME());
 INSERT INTO PageBlocks (Id, PageId, BlockType, SortOrder, Data, Styles) VALUES
     (NEWID(), @HomeId, N'Hero', 0,
-     N'{"layout":"centered","eyebrow":"چاپ دیجیتال نیک نگاه","title":"چاپی که به چشم می‌آید","subtitle":"از کارت ویزیت و بروشور تا بنر و بسته‌بندی. فایلتان را بفرستید، نمونه‌ی رنگ را ببینید و کارِ چاپ‌شده را سرِ وقت تحویل بگیرید.","buttonText":"استعلام قیمت","buttonLink":"/fa/contact","backgroundColor":"#08191F","backgroundImageUrl":"/uploads/nicnegah-hero-bg.jpg"}',
+     N'{"layout":"split","title":"چاپی که\nبه چشم می‌آید","subtitle":"از کارت ویزیت و بروشور تا بنر و بسته‌بندی. فایلتان را بفرستید، نمونه‌ی رنگ را ببینید و کارِ چاپ‌شده را سرِ وقت تحویل بگیرید.","buttonText":"استعلام قیمت","buttonLink":"/fa/contact","imageUrl":"/uploads/nicnegah-logo.png"}',
      N'{"backgroundColor":"transparent","paddingTop":"0","paddingBottom":"0","paddingLeft":"0","paddingRight":"0"}'),
     (NEWID(), @HomeId, N'Stats', 1,
      N'{"backgroundColor":"#0E252D","stats":[{"value":"[۱۲]+","label":"سال تجربه"},{"value":"[۴۸] ساعت","label":"میانگینِ زمانِ تحویل"},{"value":"[۳۰۰۰]+","label":"سفارشِ چاپ‌شده"},{"value":"۶","label":"گروهِ خدمات"}]}',
@@ -177,7 +177,7 @@ INSERT INTO Pages (Id, Title, Slug, Status, MetaTitle, MetaDescription, Culture,
 VALUES (@AboutId, N'درباره ما', N'about', 'Published', N'درباره ما | نیک نگاه', N'نیک نگاه، چاپخانه‌ی دیجیتال: دقت در رنگ، خوش‌قولی در تحویل و مشاوره در انتخابِ کاغذ و پوشش.', 'fa', NULL, SYSUTCDATETIME(), SYSUTCDATETIME(), SYSUTCDATETIME());
 INSERT INTO PageBlocks (Id, PageId, BlockType, SortOrder, Data, Styles) VALUES
     (NEWID(), @AboutId, N'Hero', 0,
-     N'{"layout":"split","title":"هر چاپ،\nبا یک نگاهِ دقیق","subtitle":"نیک نگاه چاپخانه‌ای دیجیتال است برای کسب‌وکارها و آدم‌هایی که می‌خواهند کارشان روی کاغذ همان‌طور دیده شود که روی صفحه طراحی کرده‌اند.","imageUrl":"/uploads/nicnegah-logo.png"}',
+     N'{"layout":"centered","eyebrow":"درباره نیک نگاه","title":"هر چاپ، با یک نگاهِ دقیق","subtitle":"نیک نگاه چاپخانه‌ای دیجیتال است برای کسب‌وکارها و آدم‌هایی که می‌خواهند کارشان روی کاغذ همان‌طور دیده شود که روی صفحه طراحی کرده‌اند.","backgroundColor":"#08191F","backgroundImageUrl":"/uploads/nicnegah-hero-bg.jpg"}',
      N'{"backgroundColor":"transparent","paddingTop":"0","paddingBottom":"0","paddingLeft":"0","paddingRight":"0"}'),
     (NEWID(), @AboutId, N'RichText', 1,
      N'{"content":"<p>اسمِ ما از همین‌جا آمده: نگاهِ نیک. پیش از چاپ، فایل را نگاه می‌کنیم؛ رنگ، وضوح و حاشیه‌ی برش را. اگر چیزی درست نیست، پیش از آن‌که کاغذ و وقتِ شما هدر برود، خبرتان می‌کنیم. بعد نمونه‌ی رنگ را می‌بینید و تا تأیید نکنید، چاپِ نهایی شروع نمی‌شود.</p>"}',
